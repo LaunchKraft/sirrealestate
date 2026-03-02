@@ -8,7 +8,7 @@ export default function Main({ children }: PropsWithChildren) {
 
   return (
     <main
-      className="flex h-full min-h-0 w-full flex-col pt-20 transition-all duration-(--layout-duration)"
+      className="flex h-full min-h-0 w-full flex-col bg-black/[0.03] pt-20 transition-all duration-(--layout-duration)"
       style={{ paddingInlineStart: `${paddingLeft}px` }}
     >
       {children}
