@@ -175,7 +175,7 @@ export default function ChatPage() {
   }, [conversation])
 
   return (
-    <Box className="relative flex h-full min-h-[calc(100vh-12rem)] flex-col items-center gap-5 bg-black/[0.03]">
+    <Box className="relative flex h-full min-h-[calc(100vh-12rem)] flex-col items-center gap-5">
       {/* Conversation area */}
       <Box className="flex w-full max-w-200 flex-1 flex-col items-end justify-start gap-5 pb-32 sm:px-4">
         {conversation.map((msg) => (
