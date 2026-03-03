@@ -30,7 +30,9 @@ const SYSTEM_PROMPT =
   'update_user_details immediately to save that information. ' +
   'If the user\'s firstName and lastName are not yet set, ask for their name before creating a search profile. ' +
   'Ask about whether they are a first-time home buyer, their current city/state, their desired city/state, ' +
-  'and their preferred listing platform (Zillow, Redfin, or Realtor.com) — save all via update_user_details.'
+  'and their preferred listing platform (Zillow, Redfin, or Realtor.com) — save all via update_user_details. ' +
+  'Call get_documents when the user asks about their documents or budget, or when creating/updating a search profile. ' +
+  'If a pre-approval letter is found, use its approvedAmount as the maxPrice ceiling when setting up search criteria.'
 
 interface ChatServiceStackProps extends StackProps {
   httpApi: apigwv2.HttpApi
@@ -94,8 +96,9 @@ export class ChatServiceStack extends Stack {
     // Permission to invoke the search worker Lambda
     props.searchWorkerLambda.grantInvoke(chatLambda)
 
-    // Grant chat Lambda read access to document bucket (for future LLM tool access)
+    // Grant chat Lambda read access to document bucket and documents table
     props.documentBucket.grantRead(chatLambda)
+    props.documentsTable.grantReadData(chatLambda)
 
     // SES permission for schedule_viewing tool
     chatLambda.addToRolePolicy(
@@ -112,11 +115,15 @@ export class ChatServiceStack extends Stack {
       entry: path.join(__dirname, '../../chat-service/src/data-handler.ts'),
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_22_X,
-      timeout: Duration.seconds(15),
-      environment: tableEnv,
+      timeout: Duration.seconds(30),
+      environment: {
+        ...tableEnv,
+        ANTHROPIC_API_KEY_SECRET_ARN: anthropicApiKeySecret.secretArn,
+      },
       bundling: bundlingOptions,
     })
 
+    anthropicApiKeySecret.grantRead(dataLambda)
     props.userProfileTable.grantReadData(dataLambda)
     props.searchResultsTable.grantReadData(dataLambda)
     props.viewingsTable.grantReadData(dataLambda)

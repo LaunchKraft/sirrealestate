@@ -128,6 +128,8 @@ export interface UserDocument {
   sizeBytes: number
   s3Key: string
   uploadedAt: string
+  documentType?: string
+  extractedData?: Record<string, unknown>
 }
 
 // Anthropic SDK compatible message types

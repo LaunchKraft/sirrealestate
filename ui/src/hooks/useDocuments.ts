@@ -9,6 +9,8 @@ export interface UserDocument {
   sizeBytes: number
   s3Key: string
   uploadedAt: string
+  documentType?: string
+  extractedData?: Record<string, unknown>
 }
 
 interface DocumentsResponse {

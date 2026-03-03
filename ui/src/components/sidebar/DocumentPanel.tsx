@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Box, IconButton, Tooltip, Typography } from '@mui/material'
+import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material'
 import NiArrowOutUp from '@/icons/nexture/ni-arrow-out-up'
 import NiShare from '@/icons/nexture/ni-share'
 import { documents as documentsApi } from '@/services/api'
@@ -8,6 +8,26 @@ import type { UserDocument } from '@/hooks/useDocuments'
 
 interface DocumentPanelProps {
   documentList: UserDocument[]
+}
+
+function formatPreApprovalSummary(extractedData: Record<string, unknown>): string {
+  const parts: string[] = []
+
+  const amount = extractedData['approvedAmount']
+  if (typeof amount === 'number' && amount > 0) {
+    const k = Math.round(amount / 1000)
+    parts.push(`Up to $${k}k`)
+  }
+
+  const expDate = extractedData['expirationDate']
+  if (typeof expDate === 'string' && expDate) {
+    const d = new Date(expDate)
+    if (!isNaN(d.getTime())) {
+      parts.push(`Exp. ${d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`)
+    }
+  }
+
+  return parts.join(' · ')
 }
 
 export default function DocumentPanel({ documentList }: DocumentPanelProps) {
@@ -65,16 +85,32 @@ export default function DocumentPanel({ documentList }: DocumentPanelProps) {
         documentList.map((doc) => (
           <Box
             key={doc.documentId}
-            className="ms-7 flex items-center justify-between gap-2 rounded-lg border border-grey-100 bg-background px-3 py-2"
+            className="ms-7 flex items-start justify-between gap-2 rounded-lg border border-grey-100 bg-background px-3 py-2"
           >
-            <Tooltip title={doc.fileName} arrow>
-              <Typography
-                variant="body2"
-                className="text-text-primary min-w-0 flex-1 truncate font-medium"
-              >
-                {doc.fileName}
-              </Typography>
-            </Tooltip>
+            <Box className="min-w-0 flex-1">
+              <Tooltip title={doc.fileName} arrow>
+                <Typography
+                  variant="body2"
+                  className="text-text-primary truncate font-medium"
+                >
+                  {doc.fileName}
+                </Typography>
+              </Tooltip>
+              {doc.documentType === 'pre_approval_letter' && (
+                <Box className="mt-1 flex flex-wrap items-center gap-1">
+                  <Chip
+                    label="Pre-Approval"
+                    size="small"
+                    sx={{ bgcolor: 'success.light', color: 'success.contrastText', fontWeight: 600, fontSize: '0.7rem', height: 20 }}
+                  />
+                  {doc.extractedData && (
+                    <Typography variant="caption" className="text-text-secondary">
+                      {formatPreApprovalSummary(doc.extractedData)}
+                    </Typography>
+                  )}
+                </Box>
+              )}
+            </Box>
             <Tooltip title="Download" arrow>
               <IconButton size="small" onClick={() => handleDownload(doc)}>
                 <NiShare size="small" />

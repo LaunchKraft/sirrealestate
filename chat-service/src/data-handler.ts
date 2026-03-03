@@ -8,6 +8,7 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda
 import type { UserProfile, SearchResult, Viewing, UserDocument } from './types'
 import { viewingAgentResponseToBuyerEmail } from './email-templates'
 import { buildListingUrl } from './mls/listing-url'
+import { classifyDocument } from './documents/classifier'
 
 const dynamo = new DynamoDBClient({})
 const ses = new SESClient({})
@@ -220,6 +221,24 @@ async function confirmUpload(userId: string, event: APIGatewayProxyEventV2): Pro
       Item: marshall(doc),
     }),
   )
+
+  if (doc.contentType === 'application/pdf') {
+    const classification = await classifyDocument(doc.s3Key, doc.fileName).catch(() => undefined)
+    if (classification && classification.documentType !== 'unknown') {
+      await dynamo.send(
+        new UpdateItemCommand({
+          TableName: process.env.DOCUMENTS_TABLE!,
+          Key: marshall({ userId, documentId: doc.documentId }),
+          UpdateExpression: 'SET documentType = :t, extractedData = :d',
+          ExpressionAttributeValues: marshall({
+            ':t': classification.documentType,
+            ':d': classification.extractedData ?? {},
+          }),
+        }),
+      ).catch(() => {})
+    }
+    return json(200, { ...doc, ...classification })
+  }
 
   return json(200, doc)
 }
