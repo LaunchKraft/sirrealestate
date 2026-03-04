@@ -9,46 +9,46 @@
 @config "../../tailwind.config.ts";
 
 /* Theme — import from shared ui package */
-@import "../../ui/src/style/theme/common.css";
-@import "../../ui/src/style/theme/blue.css";
+@import "../../../ui/src/style/theme/common.css";
+@import "../../../ui/src/style/theme/blue.css";
 
 /* Surfaces */
-@import "../../ui/src/style/surfaces/accordion.css";
-@import "../../ui/src/style/surfaces/card.css";
-@import "../../ui/src/style/surfaces/paper.css";
+@import "../../../ui/src/style/surfaces/accordion.css";
+@import "../../../ui/src/style/surfaces/card.css";
+@import "../../../ui/src/style/surfaces/paper.css";
 
 /* Data Display */
-@import "../../ui/src/style/data-display/avatar.css";
-@import "../../ui/src/style/data-display/badge.css";
-@import "../../ui/src/style/data-display/chip.css";
-@import "../../ui/src/style/data-display/divider.css";
-@import "../../ui/src/style/data-display/list.css";
-@import "../../ui/src/style/data-display/table.css";
-@import "../../ui/src/style/data-display/tooltip.css";
-@import "../../ui/src/style/data-display/typography.css";
+@import "../../../ui/src/style/data-display/avatar.css";
+@import "../../../ui/src/style/data-display/badge.css";
+@import "../../../ui/src/style/data-display/chip.css";
+@import "../../../ui/src/style/data-display/divider.css";
+@import "../../../ui/src/style/data-display/list.css";
+@import "../../../ui/src/style/data-display/table.css";
+@import "../../../ui/src/style/data-display/tooltip.css";
+@import "../../../ui/src/style/data-display/typography.css";
 
 /* Navigation */
-@import "../../ui/src/style/navigation/breadcrumb.css";
-@import "../../ui/src/style/navigation/menu.css";
-@import "../../ui/src/style/navigation/drawer.css";
-@import "../../ui/src/style/navigation/link.css";
-@import "../../ui/src/style/navigation/tabs.css";
+@import "../../../ui/src/style/navigation/breadcrumb.css";
+@import "../../../ui/src/style/navigation/menu.css";
+@import "../../../ui/src/style/navigation/drawer.css";
+@import "../../../ui/src/style/navigation/link.css";
+@import "../../../ui/src/style/navigation/tabs.css";
 
 /* Inputs */
-@import "../../ui/src/style/inputs/button.css";
-@import "../../ui/src/style/inputs/checkbox.css";
-@import "../../ui/src/style/inputs/input.css";
-@import "../../ui/src/style/inputs/select.css";
+@import "../../../ui/src/style/inputs/button.css";
+@import "../../../ui/src/style/inputs/checkbox.css";
+@import "../../../ui/src/style/inputs/input.css";
+@import "../../../ui/src/style/inputs/select.css";
 
 /* Layout */
-@import "../../ui/src/style/layout/scrollbar.css";
+@import "../../../ui/src/style/layout/scrollbar.css";
 
 /* Feedback */
-@import "../../ui/src/style/feedback/alert.css";
-@import "../../ui/src/style/feedback/dialog.css";
-@import "../../ui/src/style/feedback/progress.css";
-@import "../../ui/src/style/feedback/skeleton.css";
-@import "../../ui/src/style/feedback/snackbar.css";
+@import "../../../ui/src/style/feedback/alert.css";
+@import "../../../ui/src/style/feedback/dialog.css";
+@import "../../../ui/src/style/feedback/progress.css";
+@import "../../../ui/src/style/feedback/skeleton.css";
+@import "../../../ui/src/style/feedback/snackbar.css";
 
 @layer base {
   *,
