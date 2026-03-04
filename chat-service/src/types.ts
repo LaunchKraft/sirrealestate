@@ -130,6 +130,8 @@ export interface UserDocument {
   uploadedAt: string
   documentType?: string
   extractedData?: Record<string, unknown>
+  /** ISO timestamp set when a Dropbox Sign signature request completes. */
+  signedAt?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -225,6 +227,8 @@ export interface Offer {
    * Populated when a document is sent for signing; used to correlate webhook events.
    */
   signingRequests?: Record<string, string>
+  /** ISO timestamps keyed by FormType, set when each document is fully signed. */
+  signedForms?: Record<string, string>
   // Seller response — token enables unauthenticated upload by seller's agent
   sellerResponseToken?: string
   sellerResponse?: SellerResponse

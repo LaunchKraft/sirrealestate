@@ -1,5 +1,27 @@
 import type { Listing, Viewing } from './types'
 
+export function purchaseAgreementSignedEmail(
+  listingAddress: string,
+  chatUrl: string,
+): { subject: string; html: string } {
+  const subject = `Purchase agreement signed — ${listingAddress}`
+  const html = `
+<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+  <h2 style="color:#1a56db">Purchase Agreement Signed</h2>
+  <p>Great news! Your purchase agreement for the following property has been fully signed:</p>
+  <p style="font-weight:600">${listingAddress}</p>
+  <p>The signed document is now available in your SirRealtor account under My Documents. Your agent will submit it to the seller's agent to begin the closing process.</p>
+  <a href="${chatUrl}" style="background:#1a56db;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">
+    Open SirRealtor →
+  </a>
+  <p style="color:#6b7280;font-size:12px;margin-top:24px">Sent via SirRealtor (sirrealtor.com)</p>
+</body>
+</html>`
+  return { subject, html }
+}
+
 export function sellerDisclosureReceivedEmail(
   listingAddress: string,
   fileNames: string[],

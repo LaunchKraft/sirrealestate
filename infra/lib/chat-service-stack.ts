@@ -145,11 +145,13 @@ export class ChatServiceStack extends Stack {
       environment: {
         ...tableEnv,
         ANTHROPIC_API_KEY_SECRET_ARN: anthropicApiKeySecret.secretArn,
+        DROPBOX_SIGN_API_KEY_SECRET_ARN: dropboxSignApiKeySecret.secretArn,
       },
       bundling: bundlingOptions,
     })
 
     anthropicApiKeySecret.grantRead(dataLambda)
+    dropboxSignApiKeySecret.grantRead(dataLambda)
     props.userProfileTable.grantReadWriteData(dataLambda)
     props.searchResultsTable.grantReadData(dataLambda)
     props.viewingsTable.grantReadData(dataLambda)
@@ -247,6 +249,13 @@ export class ChatServiceStack extends Stack {
     new apigwv2.HttpRoute(this, 'ViewingResponseRoute', {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/viewing-response', apigwv2.HttpMethod.GET),
+      integration: dataIntegration,
+    })
+
+    // Unauthenticated — Dropbox Sign webhook (no auth header; verified via HMAC in handler)
+    new apigwv2.HttpRoute(this, 'DropboxSignWebhookRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/webhooks/dropbox-sign', apigwv2.HttpMethod.POST),
       integration: dataIntegration,
     })
 

@@ -12,6 +12,8 @@ export interface SigningRequest {
   subject: string
   message: string
   signers: Array<{ name: string; email: string }>
+  /** Key/value pairs passed through to the webhook payload for correlation. */
+  metadata?: Record<string, string>
 }
 
 export interface SigningResult {
@@ -52,6 +54,12 @@ export class DropboxSignProvider implements SigningProvider {
       form.append(`signers[${i}][email_address]`, signer.email)
       form.append(`signers[${i}][order]`, String(i))
     })
+
+    if (request.metadata) {
+      Object.entries(request.metadata).forEach(([k, v]) => {
+        form.append(`metadata[${k}]`, v)
+      })
+    }
 
     form.append(
       'file[0]',

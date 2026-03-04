@@ -9,6 +9,7 @@ import type { UserProfile, SearchResult, Viewing, UserDocument, Offer } from './
 import { viewingAgentResponseToBuyerEmail, sellerDisclosureReceivedEmail } from './email-templates'
 import { buildListingUrl } from './mls/listing-url'
 import { classifyDocument } from './documents/classifier'
+import { handleDropboxSignWebhook } from './webhooks/dropbox-sign'
 
 const dynamo = new DynamoDBClient({})
 const ses = new SESClient({})
@@ -449,6 +450,10 @@ export async function handler(
     if (path === '/seller-response' && event.requestContext.http.method === 'GET') return getSellerResponseInfo(event)
     if (path === '/seller-response/upload-url') return getSellerUploadUrl(event)
     if (path === '/seller-response/confirm') return confirmSellerUpload(event)
+    if (path === '/webhooks/dropbox-sign' && event.requestContext.http.method === 'POST') {
+      const ack = await handleDropboxSignWebhook(event.body ?? '')
+      return { statusCode: 200, headers: { 'Content-Type': 'text/plain' }, body: ack }
+    }
 
     // Authenticated routes — extract userId from JWT claims
     const claims = (event.requestContext as unknown as {

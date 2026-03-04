@@ -144,6 +144,7 @@ export async function execute(
       'Your purchase agreement is ready for review and signature. ' +
       'Please sign at your earliest convenience.',
     signers,
+    metadata: { userId, offerId: offer.offerId, formType: 'purchase_agreement' },
   })
 
   // Update offer with document ID and signature request ID
