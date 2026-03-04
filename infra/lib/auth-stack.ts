@@ -98,6 +98,7 @@ export class AuthStack extends Stack {
         fromEmail: `noreply@${props.domainName}`,
         fromName: 'SirRealtor',
         sesRegion: this.region,
+        sesVerifiedDomain: props.domainName,
       }),
       userVerification: {
         emailSubject: 'Your SirRealtor verification code',
