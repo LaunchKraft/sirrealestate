@@ -1,0 +1,98 @@
+import * as path from 'path'
+import { Duration, Stack, type StackProps } from 'aws-cdk-lib'
+import * as lambda from 'aws-cdk-lib/aws-lambda'
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
+import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2'
+import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations'
+import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers'
+import * as cognito from 'aws-cdk-lib/aws-cognito'
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
+import * as iam from 'aws-cdk-lib/aws-iam'
+import type { Construct } from 'constructs'
+
+interface AdminServiceStackProps extends StackProps {
+  httpApi: apigwv2.HttpApi
+  adminUserPool: cognito.UserPool
+  adminUserPoolClient: cognito.UserPoolClient
+  /** Consumer Cognito user pool ID — for listing and managing buyer accounts */
+  consumerUserPoolId: string
+  userProfileTable: dynamodb.Table
+  searchResultsTable: dynamodb.Table
+  viewingsTable: dynamodb.Table
+  documentsTable: dynamodb.Table
+  offersTable: dynamodb.Table
+}
+
+export class AdminServiceStack extends Stack {
+  constructor(scope: Construct, id: string, props: AdminServiceStackProps) {
+    super(scope, id, props)
+
+    const adminLambda = new NodejsFunction(this, 'AdminLambda', {
+      entry: path.join(__dirname, '../../admin-service/src/handler.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_22_X,
+      timeout: Duration.seconds(30),
+      environment: {
+        CONSUMER_USER_POOL_ID: props.consumerUserPoolId,
+        USER_PROFILE_TABLE: props.userProfileTable.tableName,
+        SEARCH_RESULTS_TABLE: props.searchResultsTable.tableName,
+        VIEWINGS_TABLE: props.viewingsTable.tableName,
+        DOCUMENTS_TABLE: props.documentsTable.tableName,
+        OFFERS_TABLE: props.offersTable.tableName,
+      },
+      bundling: { externalModules: [] as string[] },
+    })
+
+    // Read access to all consumer DynamoDB tables
+    props.userProfileTable.grantReadData(adminLambda)
+    props.searchResultsTable.grantReadData(adminLambda)
+    props.viewingsTable.grantReadData(adminLambda)
+    props.documentsTable.grantReadData(adminLambda)
+    props.offersTable.grantReadData(adminLambda)
+
+    // Permission to list and manage users in the consumer Cognito pool
+    adminLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'cognito-idp:ListUsers',
+          'cognito-idp:AdminGetUser',
+          'cognito-idp:AdminDisableUser',
+          'cognito-idp:AdminEnableUser',
+          'cognito-idp:AdminDeleteUser',
+        ],
+        resources: [
+          `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${props.consumerUserPoolId}`,
+        ],
+      }),
+    )
+
+    const adminAuthorizer = new HttpJwtAuthorizer(
+      'AdminCognitoAuthorizer',
+      `https://cognito-idp.${this.region}.amazonaws.com/${props.adminUserPool.userPoolId}`,
+      {
+        jwtAudience: [props.adminUserPoolClient.userPoolClientId],
+      },
+    )
+
+    const adminIntegration = new HttpLambdaIntegration('AdminIntegration', adminLambda)
+
+    const routes: { id: string; routePath: string; method: apigwv2.HttpMethod }[] = [
+      { id: 'DashboardRoute', routePath: '/dashboard', method: apigwv2.HttpMethod.GET },
+      { id: 'UsersRoute', routePath: '/users', method: apigwv2.HttpMethod.GET },
+      { id: 'UsersPatchRoute', routePath: '/users', method: apigwv2.HttpMethod.PATCH },
+      { id: 'SearchesRoute', routePath: '/searches', method: apigwv2.HttpMethod.GET },
+      { id: 'DocumentsRoute', routePath: '/documents', method: apigwv2.HttpMethod.GET },
+      { id: 'ViewingsRoute', routePath: '/viewings', method: apigwv2.HttpMethod.GET },
+      { id: 'OffersRoute', routePath: '/offers', method: apigwv2.HttpMethod.GET },
+    ]
+
+    for (const route of routes) {
+      new apigwv2.HttpRoute(this, route.id, {
+        httpApi: props.httpApi,
+        routeKey: apigwv2.HttpRouteKey.with(route.routePath, route.method),
+        integration: adminIntegration,
+        authorizer: adminAuthorizer,
+      })
+    }
+  }
+}

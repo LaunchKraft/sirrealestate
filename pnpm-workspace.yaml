@@ -2,6 +2,8 @@ packages:
   - ui
   - infra
   - chat-service
+  - admin
+  - admin-service
 
 onlyBuiltDependencies:
   - esbuild

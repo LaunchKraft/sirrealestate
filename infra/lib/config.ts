@@ -4,9 +4,11 @@ export interface SirRealtorConfig {
   prodAccount: string
   prodRegion: string
   certRegion: string
-  baseDomain: string   // sirrealtor.com
-  appDomain: string    // app.sirrealtor.com  (app-<env>.sirrealtor.com for lower envs)
-  apiDomain: string    // api.sirrealtor.com  (api-<env>.sirrealtor.com for lower envs)
+  baseDomain: string      // sirrealtor.com
+  appDomain: string       // app.sirrealtor.com  (app-<env>.sirrealtor.com for lower envs)
+  apiDomain: string       // api.sirrealtor.com  (api-<env>.sirrealtor.com for lower envs)
+  adminDomain: string     // admin.sirrealtor.com
+  adminApiDomain: string  // admin-api.sirrealtor.com
 }
 
 export function getConfig(app: App): SirRealtorConfig {
@@ -34,5 +36,7 @@ export function getConfig(app: App): SirRealtorConfig {
     baseDomain,
     appDomain: `app${envSuffix}.${baseDomain}`,
     apiDomain: `api${envSuffix}.${baseDomain}`,
+    adminDomain: `admin${envSuffix}.${baseDomain}`,
+    adminApiDomain: `admin-api${envSuffix}.${baseDomain}`,
   }
 }

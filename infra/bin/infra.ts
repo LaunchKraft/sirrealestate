@@ -11,6 +11,12 @@ import { DataStack } from '../lib/data-stack'
 import { SesStack } from '../lib/ses-stack'
 import { ChatServiceStack } from '../lib/chat-service-stack'
 import { SearchWorkerStack } from '../lib/search-worker-stack'
+import { AdminDnsStack } from '../lib/admin-dns-stack'
+import { AdminCertStack } from '../lib/admin-cert-stack'
+import { AdminUiStack } from '../lib/admin-ui-stack'
+import { AdminAuthStack } from '../lib/admin-auth-stack'
+import { AdminApiStack } from '../lib/admin-api-stack'
+import { AdminServiceStack } from '../lib/admin-service-stack'
 
 const app = new App()
 const config = getConfig(app)
@@ -102,3 +108,68 @@ chatServiceStack.addDependency(authStack)
 chatServiceStack.addDependency(dataStack)
 chatServiceStack.addDependency(sesStack)
 chatServiceStack.addDependency(searchWorkerStack)
+
+// ---------------------------------------------------------------------------
+// Admin console — separate stacks, separate Cognito pool, separate API GW
+// ---------------------------------------------------------------------------
+
+const adminDnsStack = new AdminDnsStack(app, 'SirRealtor-AdminDns', {
+  env: prodEnv,
+  adminDomain: config.adminDomain,
+  adminApiDomain: config.adminApiDomain,
+  crossRegionReferences: true,
+})
+
+// MANUAL STEP after AdminDns deploys: add NS delegation records in parent account.
+
+// CertStack must deploy to us-east-1 — required by CloudFront.
+const adminCertStack = new AdminCertStack(app, 'SirRealtor-AdminCert', {
+  env: certEnv,
+  adminDomain: config.adminDomain,
+  adminApiDomain: config.adminApiDomain,
+  adminHostedZone: adminDnsStack.adminHostedZone,
+  adminApiHostedZone: adminDnsStack.adminApiHostedZone,
+  crossRegionReferences: true,
+})
+adminCertStack.addDependency(adminDnsStack)
+
+const adminUiStack = new AdminUiStack(app, 'SirRealtor-AdminUi', {
+  env: prodEnv,
+  adminDomain: config.adminDomain,
+  certificate: adminCertStack.adminCertificate,
+  hostedZone: adminDnsStack.adminHostedZone,
+  crossRegionReferences: true,
+})
+adminUiStack.addDependency(adminCertStack)
+
+const adminAuthStack = new AdminAuthStack(app, 'SirRealtor-AdminAuth', {
+  env: prodEnv,
+  adminDomain: config.adminDomain,
+})
+
+const adminApiStack = new AdminApiStack(app, 'SirRealtor-AdminApi', {
+  env: prodEnv,
+  adminDomain: config.adminDomain,
+  adminApiDomain: config.adminApiDomain,
+  certificate: adminCertStack.adminApiCertificate,
+  hostedZone: adminDnsStack.adminApiHostedZone,
+  crossRegionReferences: true,
+})
+adminApiStack.addDependency(adminCertStack)
+
+const adminServiceStack = new AdminServiceStack(app, 'SirRealtor-AdminService', {
+  env: prodEnv,
+  httpApi: adminApiStack.httpApi,
+  adminUserPool: adminAuthStack.userPool,
+  adminUserPoolClient: adminAuthStack.userPoolClient,
+  consumerUserPoolId: authStack.userPool.userPoolId,
+  userProfileTable: dataStack.userProfileTable,
+  searchResultsTable: dataStack.searchResultsTable,
+  viewingsTable: dataStack.viewingsTable,
+  documentsTable: dataStack.documentsTable,
+  offersTable: dataStack.offersTable,
+})
+adminServiceStack.addDependency(adminApiStack)
+adminServiceStack.addDependency(adminAuthStack)
+adminServiceStack.addDependency(dataStack)
+adminServiceStack.addDependency(authStack)
