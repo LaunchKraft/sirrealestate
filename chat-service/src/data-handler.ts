@@ -243,6 +243,35 @@ async function confirmUpload(userId: string, event: APIGatewayProxyEventV2): Pro
   return json(200, doc)
 }
 
+async function patchProfile(userId: string, event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const body = JSON.parse(event.body ?? '{}') as { firstName?: string; lastName?: string }
+  const { firstName, lastName } = body
+  if (!firstName && !lastName) return json(400, { error: 'Nothing to update' })
+
+  const now = new Date().toISOString()
+  const updates: Record<string, unknown> = { updatedAt: now }
+  if (firstName) updates.firstName = firstName
+  if (lastName) updates.lastName = lastName
+
+  const setExpressions = Object.keys(updates).map((k) => `#${k} = :${k}`)
+  const expressionAttributeNames = Object.fromEntries(Object.keys(updates).map((k) => [`#${k}`, k]))
+  const expressionAttributeValues = Object.fromEntries(
+    Object.entries(updates).map(([k, v]) => [`:${k}`, marshall({ val: v }).val]),
+  )
+
+  await dynamo.send(
+    new UpdateItemCommand({
+      TableName: process.env.USER_PROFILE_TABLE!,
+      Key: { userId: { S: userId } },
+      UpdateExpression: `SET ${setExpressions.join(', ')}`,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+    }),
+  )
+
+  return json(200, { ok: true })
+}
+
 async function getDownloadUrl(userId: string, event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const { documentId } = event.queryStringParameters ?? {}
   if (!documentId) return json(400, { error: 'Missing documentId' })
@@ -287,7 +316,8 @@ export async function handler(
     const userId = claims?.['sub'] as string | undefined
     if (!userId) return json(401, { error: 'Unauthorized' })
 
-    if (path === '/profile') return getProfile(userId)
+    if (path === '/profile' && event.requestContext.http.method === 'GET') return getProfile(userId)
+    if (path === '/profile' && event.requestContext.http.method === 'PATCH') return patchProfile(userId, event)
     if (path === '/search-results') return getSearchResults(userId)
     if (path === '/viewings') return getViewings(userId)
     if (path === '/documents' && event.requestContext.http.method === 'GET') return getDocuments(userId)

@@ -13,6 +13,7 @@ import {
 } from '@mui/material'
 import { chat } from '@/services/api'
 import { useDocumentUpload } from '@/hooks/useDocumentUpload'
+import NameMismatchDialog from '@/components/documents/NameMismatchDialog'
 import ChatMessage from '@/pages/chat/chat-message'
 import { Conversation } from '@/pages/chat/types'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
@@ -63,7 +64,7 @@ export default function ChatPage() {
   const [sessionId, setSessionId] = useState<string | undefined>(() => loadSession().sessionId)
   const { invalidateProfile, invalidateSearchResults } = useSidebarRefresh()
   const { profile, refetch: refetchProfile } = useUserProfile()
-  const { upload, isUploading } = useDocumentUpload()
+  const { upload, isUploading, nameMismatch, clearNameMismatch, updateProfileName } = useDocumentUpload()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { refetchProfile() }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -176,6 +177,11 @@ export default function ChatPage() {
 
   return (
     <Box className="relative flex h-full min-h-[calc(100vh-12rem)] flex-col items-center gap-5">
+      <NameMismatchDialog
+        nameMismatch={nameMismatch}
+        onUpdate={updateProfileName}
+        onDismiss={clearNameMismatch}
+      />
       {/* Conversation area */}
       <Box className="flex w-full max-w-200 flex-1 flex-col items-end justify-start gap-5 pb-32 sm:px-4">
         {conversation.map((msg) => (

@@ -124,7 +124,7 @@ export class ChatServiceStack extends Stack {
     })
 
     anthropicApiKeySecret.grantRead(dataLambda)
-    props.userProfileTable.grantReadData(dataLambda)
+    props.userProfileTable.grantReadWriteData(dataLambda)
     props.searchResultsTable.grantReadData(dataLambda)
     props.viewingsTable.grantReadData(dataLambda)
     props.viewingsTable.grantWriteData(dataLambda)
@@ -163,6 +163,13 @@ export class ChatServiceStack extends Stack {
     new apigwv2.HttpRoute(this, 'ProfileRoute', {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/profile', apigwv2.HttpMethod.GET),
+      integration: dataIntegration,
+      authorizer: cognitoAuthorizer,
+    })
+
+    new apigwv2.HttpRoute(this, 'ProfilePatchRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/profile', apigwv2.HttpMethod.PATCH),
       integration: dataIntegration,
       authorizer: cognitoAuthorizer,
     })

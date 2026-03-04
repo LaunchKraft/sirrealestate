@@ -12,6 +12,8 @@ export interface TaxonomyEntry {
   displayName: string
   description: string
   fields: TaxonomyField[]
+  /** Key of the field that contains person names (string[]) — used for name-matching checks */
+  nameField?: string
 }
 
 export const TAXONOMY: TaxonomyEntry[] = [
@@ -27,5 +29,6 @@ export const TAXONOMY: TaxonomyEntry[] = [
       { key: 'loanType',                 label: 'Loan Type',             type: 'string',   description: 'Loan program (conventional, FHA, VA, USDA, jumbo)' },
       { key: 'propertyTypeRestrictions', label: 'Property Restrictions', type: 'string[]', description: 'Restrictions on eligible property types; empty array if none stated' },
     ],
+    nameField: 'borrowerNames',
   },
 ]

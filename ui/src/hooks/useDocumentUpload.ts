@@ -1,10 +1,37 @@
 import { useState, useCallback } from 'react'
-import { documents as documentsApi } from '@/services/api'
+import { documents as documentsApi, profile as profileApi } from '@/services/api'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
+
+// Maps documentType → the extractedData key that holds person names (string[]).
+// Mirrors the nameField in the backend taxonomy.
+const NAME_FIELD_BY_TYPE: Record<string, string> = {
+  pre_approval_letter: 'borrowerNames',
+}
+
+export interface NameMismatch {
+  documentNames: string[]
+  profileName: string
+}
+
+function namesMatch(firstName: string, lastName: string, documentNames: string[]): boolean {
+  const fn = firstName.toLowerCase().trim()
+  const ln = lastName.toLowerCase().trim()
+  return documentNames.some((name) => {
+    const words = name.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(Boolean)
+    return words.includes(fn) && words.includes(ln)
+  })
+}
+
+function parseFullName(fullName: string): { firstName: string; lastName: string } {
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length === 1) return { firstName: parts[0], lastName: '' }
+  return { firstName: parts.slice(0, -1).join(' '), lastName: parts[parts.length - 1] }
+}
 
 export function useDocumentUpload() {
   const [isUploading, setIsUploading] = useState(false)
-  const { invalidateDocuments } = useSidebarRefresh()
+  const [nameMismatch, setNameMismatch] = useState<NameMismatch | null>(null)
+  const { invalidateDocuments, invalidateProfile } = useSidebarRefresh()
 
   const upload = useCallback(async (file: File): Promise<void> => {
     setIsUploading(true)
@@ -17,7 +44,7 @@ export function useDocumentUpload() {
         headers: { 'Content-Type': file.type },
       })
 
-      await documentsApi.confirm({
+      const doc = await documentsApi.confirm({
         documentId,
         s3Key,
         fileName: file.name,
@@ -26,10 +53,36 @@ export function useDocumentUpload() {
       })
 
       invalidateDocuments()
+
+      // Name mismatch check for classified documents that have a name field
+      const nameField = doc.documentType ? NAME_FIELD_BY_TYPE[doc.documentType] : undefined
+      if (nameField && Array.isArray(doc.extractedData?.[nameField])) {
+        const documentNames = doc.extractedData![nameField] as string[]
+        if (documentNames.length > 0) {
+          const userProfile = await profileApi.get().catch(() => null)
+          if (userProfile?.firstName && userProfile?.lastName) {
+            if (!namesMatch(userProfile.firstName, userProfile.lastName, documentNames)) {
+              setNameMismatch({
+                documentNames,
+                profileName: `${userProfile.firstName} ${userProfile.lastName}`,
+              })
+            }
+          }
+        }
+      }
     } finally {
       setIsUploading(false)
     }
   }, [invalidateDocuments])
 
-  return { upload, isUploading }
+  const clearNameMismatch = useCallback(() => setNameMismatch(null), [])
+
+  const updateProfileName = useCallback(async (fullName: string): Promise<void> => {
+    const { firstName, lastName } = parseFullName(fullName)
+    await profileApi.patch({ firstName, lastName })
+    setNameMismatch(null)
+    invalidateProfile()
+  }, [invalidateProfile])
+
+  return { upload, isUploading, nameMismatch, clearNameMismatch, updateProfileName }
 }

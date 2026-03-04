@@ -5,6 +5,7 @@ import NiShare from '@/icons/nexture/ni-share'
 import { documents as documentsApi } from '@/services/api'
 import { useDocumentUpload } from '@/hooks/useDocumentUpload'
 import type { UserDocument } from '@/hooks/useDocuments'
+import NameMismatchDialog from '@/components/documents/NameMismatchDialog'
 
 interface DocumentPanelProps {
   documentList: UserDocument[]
@@ -32,7 +33,7 @@ function formatPreApprovalSummary(extractedData: Record<string, unknown>): strin
 
 export default function DocumentPanel({ documentList }: DocumentPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { upload, isUploading } = useDocumentUpload()
+  const { upload, isUploading, nameMismatch, clearNameMismatch, updateProfileName } = useDocumentUpload()
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -52,6 +53,11 @@ export default function DocumentPanel({ documentList }: DocumentPanelProps) {
 
   return (
     <Box className="flex flex-col gap-1">
+      <NameMismatchDialog
+        nameMismatch={nameMismatch}
+        onUpdate={updateProfileName}
+        onDismiss={clearNameMismatch}
+      />
       <input
         ref={fileInputRef}
         type="file"
