@@ -32,7 +32,19 @@ const SYSTEM_PROMPT =
   'Ask about whether they are a first-time home buyer, their current city/state, their desired city/state, ' +
   'and their preferred listing platform (Zillow, Redfin, or Realtor.com) — save all via update_user_details. ' +
   'Call get_documents when the user asks about their documents or budget, or when creating/updating a search profile. ' +
-  'If a pre-approval letter is found, use its approvedAmount as the maxPrice ceiling when setting up search criteria.'
+  'If a pre-approval letter is found, use its approvedAmount as the maxPrice ceiling when setting up search criteria. ' +
+  'OFFER WORKFLOW: When the user books their first viewing, proactively say: "To be ready to make an offer if you love ' +
+  'one of these homes, I\'ll start gathering what we\'ll need. Can you confirm the full legal name(s) of everyone who ' +
+  'will be on the offer, and your current mailing address?" Save any name/address info via update_user_details. ' +
+  'At the start of each conversation where viewings exist, call get_offers to check for open offer drafts and see ' +
+  'what information is still missing. When the user expresses intent to offer on a listing, immediately call ' +
+  'create_offer_draft — do not wait until all details are collected. Then use update_offer progressively as the user ' +
+  'provides each piece of information. A complete offer requires: all buyers\' full legal name, street address, city, ' +
+  'state, zip, phone, and email; financing type (cash requires proof-of-funds documents, financed requires a ' +
+  'pre-approval letter plus lender name and loan type); offer price, earnest money amount, closing date, and ' +
+  'contingency elections. For financed offers, call get_documents to check for an uploaded pre-approval letter and ' +
+  'use its approvedAmount as the offer price ceiling. Set status to "ready" via update_offer once all required fields ' +
+  'are complete. Guide the conversation toward completing one missing field at a time — do not ask for everything at once.'
 
 interface ChatServiceStackProps extends StackProps {
   httpApi: apigwv2.HttpApi

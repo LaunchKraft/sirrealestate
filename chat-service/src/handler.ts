@@ -13,6 +13,9 @@ import * as ScheduleViewing from './tools/schedule-viewing'
 import * as GetPendingFeedback from './tools/get-pending-feedback'
 import * as SaveViewingFeedback from './tools/save-viewing-feedback'
 import * as GetDocuments from './tools/get-documents'
+import * as CreateOfferDraft from './tools/create-offer-draft'
+import * as UpdateOffer from './tools/update-offer'
+import * as GetOffers from './tools/get-offers'
 import type { ConversationMessage } from './types'
 
 const secretsManager = new SecretsManagerClient({})
@@ -37,6 +40,9 @@ const TOOLS: Anthropic.Tool[] = [
   GetPendingFeedback.definition,
   SaveViewingFeedback.definition,
   GetDocuments.definition,
+  CreateOfferDraft.definition,
+  UpdateOffer.definition,
+  GetOffers.definition,
 ] as Anthropic.Tool[]
 
 async function executeTool(
@@ -62,6 +68,12 @@ async function executeTool(
       return SaveViewingFeedback.execute(userId, input as Parameters<typeof SaveViewingFeedback.execute>[1])
     case 'get_documents':
       return GetDocuments.execute(userId)
+    case 'create_offer_draft':
+      return CreateOfferDraft.execute(userId, input as Parameters<typeof CreateOfferDraft.execute>[1], userEmail)
+    case 'update_offer':
+      return UpdateOffer.execute(userId, input as Parameters<typeof UpdateOffer.execute>[1])
+    case 'get_offers':
+      return GetOffers.execute(userId, input as Parameters<typeof GetOffers.execute>[1])
     default:
       return { error: `Unknown tool: ${name}` }
   }
