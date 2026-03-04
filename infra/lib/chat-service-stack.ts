@@ -1,4 +1,4 @@
-// ci trigger
+// ci trigger 2
 import * as path from 'path'
 import { Duration, Stack, CfnOutput, type StackProps } from 'aws-cdk-lib'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
