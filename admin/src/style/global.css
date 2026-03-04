@@ -50,6 +50,27 @@
 @import "../../../ui/src/style/feedback/skeleton.css";
 @import "../../../ui/src/style/feedback/snackbar.css";
 
+@theme {
+  --shadow-line-left: var(--shadow-line-left);
+  --shadow-line-right: var(--shadow-line-right);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+
+  --shadow-darker-2xs: var(--shadow-darker-2xs);
+  --shadow-darker-xs: var(--shadow-darker-xs);
+  --shadow-darker-sm: var(--shadow-darker-sm);
+  --shadow-darker-md: var(--shadow-darker-md);
+  --shadow-darker-lg: var(--shadow-darker-lg);
+  --shadow-darker-xl: var(--shadow-darker-xl);
+  --shadow-darker-2xl: var(--shadow-darker-2xl);
+}
+
 @layer base {
   *,
   ::after,
