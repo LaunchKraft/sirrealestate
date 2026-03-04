@@ -220,6 +220,11 @@ export interface Offer {
   purchaseAgreementDocumentId?: string
   earnestMoneyAgreementDocumentId?: string
   agencyDisclosureDocumentId?: string
+  /**
+   * Dropbox Sign signature_request_ids keyed by FormType.
+   * Populated when a document is sent for signing; used to correlate webhook events.
+   */
+  signingRequests?: Record<string, string>
   // Seller response — token enables unauthenticated upload by seller's agent
   sellerResponseToken?: string
   sellerResponse?: SellerResponse

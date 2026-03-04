@@ -44,7 +44,10 @@ const SYSTEM_PROMPT =
   'pre-approval letter plus lender name and loan type); offer price, earnest money amount, closing date, and ' +
   'contingency elections. For financed offers, call get_documents to check for an uploaded pre-approval letter and ' +
   'use its approvedAmount as the offer price ceiling. Set status to "ready" via update_offer once all required fields ' +
-  'are complete. Guide the conversation toward completing one missing field at a time — do not ask for everything at once.'
+  'are complete. Guide the conversation toward completing one missing field at a time — do not ask for everything at once. ' +
+  'Once the offer status is "ready", offer to generate the purchase agreement by calling generate_purchase_agreement. ' +
+  'Explain that this will create a PDF and send it to the buyer(s) via Dropbox Sign for e-signature. ' +
+  'Only call generate_purchase_agreement after the user explicitly confirms they want to proceed.'
 
 interface ChatServiceStackProps extends StackProps {
   httpApi: apigwv2.HttpApi
@@ -82,6 +85,11 @@ export class ChatServiceStack extends Stack {
       this, 'AnthropicApiKey', 'SirRealtor/AnthropicApiKey',
     )
 
+    // Reference the manually-created Dropbox Sign API key secret (create this in Secrets Manager first)
+    const dropboxSignApiKeySecret = secretsmanager.Secret.fromSecretNameV2(
+      this, 'DropboxSignApiKey', 'SirRealtor/DropboxSignApiKey',
+    )
+
     // Chat Lambda
     const chatLambda = new NodejsFunction(this, 'ChatLambda', {
       entry: path.join(__dirname, '../../chat-service/src/handler.ts'),
@@ -91,6 +99,7 @@ export class ChatServiceStack extends Stack {
       environment: {
         ANTHROPIC_MODEL_ID,
         ANTHROPIC_API_KEY_SECRET_ARN: anthropicApiKeySecret.secretArn,
+        DROPBOX_SIGN_API_KEY_SECRET_ARN: dropboxSignApiKeySecret.secretArn,
         SYSTEM_PROMPT,
         SEARCH_WORKER_FUNCTION_NAME: props.searchWorkerLambda.functionName,
         ...tableEnv,
@@ -98,8 +107,9 @@ export class ChatServiceStack extends Stack {
       bundling: bundlingOptions,
     })
 
-    // Anthropic API key read permission
+    // Anthropic + Dropbox Sign API key read permissions
     anthropicApiKeySecret.grantRead(chatLambda)
+    dropboxSignApiKeySecret.grantRead(chatLambda)
 
     // DynamoDB permissions for chat lambda
     props.userProfileTable.grantReadWriteData(chatLambda)
@@ -110,9 +120,10 @@ export class ChatServiceStack extends Stack {
     // Permission to invoke the search worker Lambda
     props.searchWorkerLambda.grantInvoke(chatLambda)
 
-    // Grant chat Lambda read access to document bucket and documents table
-    props.documentBucket.grantRead(chatLambda)
-    props.documentsTable.grantReadData(chatLambda)
+    // Grant chat Lambda read/write access to document bucket and documents table
+    // (generate_purchase_agreement writes the PDF to S3 and creates a Documents record)
+    props.documentBucket.grantReadWrite(chatLambda)
+    props.documentsTable.grantReadWriteData(chatLambda)
     props.offersTable.grantReadWriteData(chatLambda)
 
     // SES permission for schedule_viewing tool
