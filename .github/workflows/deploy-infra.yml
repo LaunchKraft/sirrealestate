@@ -43,5 +43,23 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: CDK deploy all stacks
-        run: pnpm --filter infra exec -- cdk deploy --all --require-approval never -c prodAccount=${{ secrets.AWS_ACCOUNT_ID }}
+      - name: CDK deploy infrastructure stacks
+        # Explicitly list pure-infra stacks. Service stacks (Chat, SearchWorker, AdminService)
+        # are deployed by their own dedicated workflows and bundle Lambda source files —
+        # excluding them here prevents failures when only infra changes are pushed.
+        run: |
+          pnpm --filter infra exec -- cdk deploy \
+            SirRealtor-Dns \
+            SirRealtor-Cert \
+            SirRealtor-Ui \
+            SirRealtor-Auth \
+            SirRealtor-Api \
+            SirRealtor-Data \
+            SirRealtor-Ses \
+            SirRealtor-AdminDns \
+            SirRealtor-AdminCert \
+            SirRealtor-AdminUi \
+            SirRealtor-AdminAuth \
+            SirRealtor-AdminApi \
+            --require-approval never \
+            -c prodAccount=${{ secrets.AWS_ACCOUNT_ID }}
