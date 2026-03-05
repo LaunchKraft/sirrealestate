@@ -86,11 +86,14 @@ export default function ChatPage() {
     onResult: handleSpeechResult,
   })
 
-  // If launched with ?feedback=viewingId, pre-fill a feedback prompt
+  // If launched with ?feedback=viewingId or ?prompt=..., pre-fill the input
   useEffect(() => {
     const feedbackId = searchParams.get('feedback')
+    const prompt = searchParams.get('prompt')
     if (feedbackId) {
       setInputValue(`I'd like to share feedback about my viewing (ID: ${feedbackId})`)
+    } else if (prompt) {
+      setInputValue(prompt)
     }
   }, [searchParams])
 
