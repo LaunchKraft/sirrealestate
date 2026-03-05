@@ -171,6 +171,12 @@ export default function LeftMenu() {
           )}
         </SidebarSection>
 
+        <div className="flex justify-center py-0.5 text-text-secondary opacity-30">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 3v10M8 13l-3.5-3.5M8 13l3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+
         <SidebarSection
           title="My Viewings"
           icon={<NiCalendar size="small" />}
@@ -185,6 +191,12 @@ export default function LeftMenu() {
           )}
         </SidebarSection>
 
+        <div className="flex justify-center py-0.5 text-text-secondary opacity-30">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 3v10M8 13l-3.5-3.5M8 13l3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+
         <SidebarSection
           title="My Offers"
           icon={<NiDuplicate size="small" />}
@@ -198,6 +210,12 @@ export default function LeftMenu() {
             offers.map((o) => <OfferCard key={o.offerId} offer={o} />)
           )}
         </SidebarSection>
+
+        <div className="flex justify-center py-0.5 text-text-secondary opacity-30">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 3v10M8 13l-3.5-3.5M8 13l3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
 
         <SidebarSection
           title="My Home"
