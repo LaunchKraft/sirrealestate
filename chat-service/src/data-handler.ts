@@ -10,6 +10,7 @@ import { viewingAgentResponseToBuyerEmail, sellerDisclosureReceivedEmail } from 
 import { buildListingUrl } from './mls/listing-url'
 import { classifyDocument } from './documents/classifier'
 import { handleDropboxSignWebhook } from './webhooks/dropbox-sign'
+import { handleEarnnestWebhook } from './webhooks/earnnest'
 
 const dynamo = new DynamoDBClient({})
 const ses = new SESClient({})
@@ -453,6 +454,11 @@ export async function handler(
     if (path === '/webhooks/dropbox-sign' && event.requestContext.http.method === 'POST') {
       const ack = await handleDropboxSignWebhook(event.body ?? '')
       return { statusCode: 200, headers: { 'Content-Type': 'text/plain' }, body: ack }
+    }
+    if (path === '/webhooks/earnnest' && event.requestContext.http.method === 'POST') {
+      const sig = event.headers?.['x-earnnest-signature']
+      const result = await handleEarnnestWebhook(event.body ?? '', sig)
+      return { statusCode: result.statusCode, headers: { 'Content-Type': 'application/json' }, body: result.body }
     }
 
     // Authenticated routes — extract userId from JWT claims

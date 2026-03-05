@@ -229,6 +229,10 @@ export interface Offer {
   signingRequests?: Record<string, string>
   /** ISO timestamps keyed by FormType, set when each document is fully signed. */
   signedForms?: Record<string, string>
+  /** Earnnest payment ID — set when initiate_earnest_money_transfer is called. */
+  earnestMoneyPaymentId?: string
+  /** ISO timestamp set when Earnnest confirms the deposit was received. */
+  earnestMoneyPaidAt?: string
   // Seller response — token enables unauthenticated upload by seller's agent
   sellerResponseToken?: string
   sellerResponse?: SellerResponse

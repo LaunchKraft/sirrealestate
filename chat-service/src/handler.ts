@@ -17,6 +17,7 @@ import * as CreateOfferDraft from './tools/create-offer-draft'
 import * as UpdateOffer from './tools/update-offer'
 import * as GetOffers from './tools/get-offers'
 import * as GeneratePurchaseAgreement from './tools/generate-purchase-agreement'
+import * as GenerateEarnestMoneyAgreement from './tools/generate-earnest-money-agreement'
 import type { ConversationMessage } from './types'
 
 const secretsManager = new SecretsManagerClient({})
@@ -45,6 +46,7 @@ const TOOLS: Anthropic.Tool[] = [
   UpdateOffer.definition,
   GetOffers.definition,
   GeneratePurchaseAgreement.definition,
+  GenerateEarnestMoneyAgreement.definition,
 ] as Anthropic.Tool[]
 
 async function executeTool(
@@ -78,6 +80,8 @@ async function executeTool(
       return GetOffers.execute(userId, input as Parameters<typeof GetOffers.execute>[1])
     case 'generate_purchase_agreement':
       return GeneratePurchaseAgreement.execute(userId, input as Parameters<typeof GeneratePurchaseAgreement.execute>[1])
+    case 'generate_earnest_money_agreement':
+      return GenerateEarnestMoneyAgreement.execute(userId, input as Parameters<typeof GenerateEarnestMoneyAgreement.execute>[1])
     default:
       return { error: `Unknown tool: ${name}` }
   }

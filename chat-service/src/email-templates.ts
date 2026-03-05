@@ -46,6 +46,30 @@ export function sellerDisclosureReceivedEmail(
   return { subject, html }
 }
 
+export function earnestMoneyReceivedEmail(
+  listingAddress: string,
+  amount: number,
+  chatUrl: string,
+): { subject: string; html: string } {
+  const subject = `Earnest money deposit received — ${listingAddress}`
+  const html = `
+<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+  <h2 style="color:#1a56db">Earnest Money Deposit Confirmed</h2>
+  <p>Your earnest money deposit has been successfully received by escrow for:</p>
+  <p style="font-weight:600">${listingAddress}</p>
+  <p><strong>Amount:</strong> $${amount.toLocaleString()}</p>
+  <p>The funds are now held in escrow and will be applied toward closing or returned per the terms of your purchase agreement.</p>
+  <a href="${chatUrl}" style="background:#1a56db;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">
+    Open SirRealtor →
+  </a>
+  <p style="color:#6b7280;font-size:12px;margin-top:24px">Sent via SirRealtor (sirrealtor.com)</p>
+</body>
+</html>`
+  return { subject, html }
+}
+
 export function newListingMatchEmail(listing: Listing, chatUrl: string): { subject: string; html: string } {
   const subject = `New match: ${listing.address} — $${listing.price.toLocaleString()}`
   const html = `

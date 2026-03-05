@@ -47,7 +47,9 @@ const SYSTEM_PROMPT =
   'are complete. Guide the conversation toward completing one missing field at a time — do not ask for everything at once. ' +
   'Once the offer status is "ready", offer to generate the purchase agreement by calling generate_purchase_agreement. ' +
   'Explain that this will create a PDF and send it to the buyer(s) via Dropbox Sign for e-signature. ' +
-  'Only call generate_purchase_agreement after the user explicitly confirms they want to proceed.'
+  'Only call generate_purchase_agreement after the user explicitly confirms they want to proceed. ' +
+  'After the purchase agreement is signed, offer to generate the earnest money deposit agreement by calling ' +
+  'generate_earnest_money_agreement. Ask the buyer for the deposit due date and escrow holder name if not yet known.'
 
 interface ChatServiceStackProps extends StackProps {
   httpApi: apigwv2.HttpApi
@@ -90,6 +92,11 @@ export class ChatServiceStack extends Stack {
       this, 'DropboxSignApiKey', 'SirRealtor/DropboxSignApiKey',
     )
 
+    // Reference the manually-created Earnnest API key secret (create when Earnnest access is granted)
+    const earnnestApiKeySecret = secretsmanager.Secret.fromSecretNameV2(
+      this, 'EarnnestApiKey', 'SirRealtor/EarnnestApiKey',
+    )
+
     // Chat Lambda
     const chatLambda = new NodejsFunction(this, 'ChatLambda', {
       entry: path.join(__dirname, '../../chat-service/src/handler.ts'),
@@ -100,6 +107,7 @@ export class ChatServiceStack extends Stack {
         ANTHROPIC_MODEL_ID,
         ANTHROPIC_API_KEY_SECRET_ARN: anthropicApiKeySecret.secretArn,
         DROPBOX_SIGN_API_KEY_SECRET_ARN: dropboxSignApiKeySecret.secretArn,
+        EARNNEST_API_KEY_SECRET_ARN: earnnestApiKeySecret.secretArn,
         SYSTEM_PROMPT,
         SEARCH_WORKER_FUNCTION_NAME: props.searchWorkerLambda.functionName,
         ...tableEnv,
@@ -146,12 +154,14 @@ export class ChatServiceStack extends Stack {
         ...tableEnv,
         ANTHROPIC_API_KEY_SECRET_ARN: anthropicApiKeySecret.secretArn,
         DROPBOX_SIGN_API_KEY_SECRET_ARN: dropboxSignApiKeySecret.secretArn,
+        EARNNEST_API_KEY_SECRET_ARN: earnnestApiKeySecret.secretArn,
       },
       bundling: bundlingOptions,
     })
 
     anthropicApiKeySecret.grantRead(dataLambda)
     dropboxSignApiKeySecret.grantRead(dataLambda)
+    earnnestApiKeySecret.grantRead(dataLambda)
     props.userProfileTable.grantReadWriteData(dataLambda)
     props.searchResultsTable.grantReadData(dataLambda)
     props.viewingsTable.grantReadData(dataLambda)
@@ -249,6 +259,13 @@ export class ChatServiceStack extends Stack {
     new apigwv2.HttpRoute(this, 'ViewingResponseRoute', {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/viewing-response', apigwv2.HttpMethod.GET),
+      integration: dataIntegration,
+    })
+
+    // Unauthenticated — Earnnest webhook (verified via HMAC in handler; active once API access granted)
+    new apigwv2.HttpRoute(this, 'EarnnestWebhookRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/webhooks/earnnest', apigwv2.HttpMethod.POST),
       integration: dataIntegration,
     })
 
