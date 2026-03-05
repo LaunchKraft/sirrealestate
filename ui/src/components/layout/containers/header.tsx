@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Avatar, Badge, Box, Button, Menu, MenuItem, Typography } from '@mui/material'
+import { Avatar, Box, Button, Menu, MenuItem, Typography } from '@mui/material'
 import { useLayoutContext } from '@/components/layout/layout-context'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
 import logo from '@/assets/logo.png'
@@ -15,7 +15,7 @@ export default function Header() {
   const { email, signOut } = useAuth()
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
   const { profile, refetch: refetchProfile } = useUserProfile()
-  const { newListingsCount } = useSidebarRefresh()
+  const {} = useSidebarRefresh()
 
   useEffect(() => { refetchProfile() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -49,21 +49,15 @@ export default function Header() {
         </Box>
 
         {/* Notifications bell */}
-        <Badge
-          badgeContent={newListingsCount > 0 ? newListingsCount : null}
-          color="error"
-          max={99}
+        <Button
+          variant="text"
+          size="medium"
+          color="grey"
+          className="icon-only"
           sx={{ mr: 1.5 }}
-        >
-          <Button
-            variant="text"
-            size="medium"
-            color="grey"
-            className="icon-only"
-            onClick={toggleSidebar}
-            startIcon={<NiBell size="medium" />}
-          />
-        </Badge>
+          onClick={toggleSidebar}
+          startIcon={<NiBell size="medium" />}
+        />
 
         {/* User avatar */}
         <Avatar
