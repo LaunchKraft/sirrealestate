@@ -25,6 +25,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 const get = <T>(path: string) => request<T>('GET', path)
 const patch = <T>(path: string, body: unknown) => request<T>('PATCH', path, body)
+const del = <T>(path: string) => request<T>('DELETE', path)
 
 export interface DashboardCounts {
   users: number
@@ -57,8 +58,11 @@ export const api = {
     setEnabled: (username: string, enabled: boolean) =>
       patch<{ ok: boolean }>('/users', { username, enabled }),
   },
-  searches: {
-    list: () => get<{ searches: Record<string, unknown>[] }>('/searches'),
+  profile: {
+    update: (userId: string, data: Record<string, unknown>) =>
+      patch<{ ok: boolean }>(`/profile?userId=${encodeURIComponent(userId)}`, data),
+    deleteSearchProfile: (userId: string, profileId: string) =>
+      del<{ ok: boolean }>(`/searches?userId=${encodeURIComponent(userId)}&profileId=${encodeURIComponent(profileId)}`),
   },
   documents: {
     list: () => get<{ documents: Record<string, unknown>[] }>('/documents'),

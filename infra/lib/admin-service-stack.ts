@@ -43,8 +43,8 @@ export class AdminServiceStack extends Stack {
       bundling: { externalModules: [] as string[] },
     })
 
-    // Read access to all consumer DynamoDB tables
-    props.userProfileTable.grantReadData(adminLambda)
+    // Read-write access to user profile table (admin can update profiles and delete search profiles)
+    props.userProfileTable.grantReadWriteData(adminLambda)
     props.searchResultsTable.grantReadData(adminLambda)
     props.viewingsTable.grantReadData(adminLambda)
     props.documentsTable.grantReadData(adminLambda)
@@ -80,7 +80,8 @@ export class AdminServiceStack extends Stack {
       { id: 'DashboardRoute', routePath: '/dashboard', method: apigwv2.HttpMethod.GET },
       { id: 'UsersRoute', routePath: '/users', method: apigwv2.HttpMethod.GET },
       { id: 'UsersPatchRoute', routePath: '/users', method: apigwv2.HttpMethod.PATCH },
-      { id: 'SearchesRoute', routePath: '/searches', method: apigwv2.HttpMethod.GET },
+      { id: 'ProfilePatchRoute', routePath: '/profile', method: apigwv2.HttpMethod.PATCH },
+      { id: 'SearchesDeleteRoute', routePath: '/searches', method: apigwv2.HttpMethod.DELETE },
       { id: 'DocumentsRoute', routePath: '/documents', method: apigwv2.HttpMethod.GET },
       { id: 'ViewingsRoute', routePath: '/viewings', method: apigwv2.HttpMethod.GET },
       { id: 'OffersRoute', routePath: '/offers', method: apigwv2.HttpMethod.GET },

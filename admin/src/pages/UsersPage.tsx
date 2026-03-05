@@ -8,12 +8,14 @@ import {
 } from '@mui/material'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import { api, type AdminUser } from '@/services/api'
+import UserDetailDialog from '@/components/UserDetailDialog'
 
 export default function UsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
 
   const fetchUsers = () => {
     setLoading(true)
@@ -40,7 +42,22 @@ export default function UsersPage() {
   }
 
   const columns: GridColDef<AdminUser>[] = [
-    { field: 'email', headerName: 'Email', flex: 2, minWidth: 200 },
+    {
+      field: 'email',
+      headerName: 'Email',
+      flex: 2,
+      minWidth: 200,
+      renderCell: ({ row }) => (
+        <Button
+          variant="text"
+          size="small"
+          sx={{ textTransform: 'none', justifyContent: 'flex-start', p: 0, minWidth: 0 }}
+          onClick={() => setSelectedUser(row)}
+        >
+          {row.email}
+        </Button>
+      ),
+    },
     {
       field: 'status',
       headerName: 'Status',
@@ -116,6 +133,12 @@ export default function UsersPage() {
         pageSizeOptions={[25, 50, 100]}
         initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
         disableRowSelectionOnClick
+      />
+      <UserDetailDialog
+        user={selectedUser}
+        open={selectedUser !== null}
+        onClose={() => setSelectedUser(null)}
+        onUserUpdated={fetchUsers}
       />
     </Box>
   )

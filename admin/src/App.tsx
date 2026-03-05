@@ -5,7 +5,6 @@ import LoginPage from '@/pages/LoginPage'
 import SignUpPage from '@/pages/SignUpPage'
 import DashboardPage from '@/pages/DashboardPage'
 import UsersPage from '@/pages/UsersPage'
-import SearchesPage from '@/pages/SearchesPage'
 import DocumentsPage from '@/pages/DocumentsPage'
 import ViewingsPage from '@/pages/ViewingsPage'
 import OffersPage from '@/pages/OffersPage'
@@ -25,7 +24,6 @@ export default function App() {
         >
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/users" element={<UsersPage />} />
-          <Route path="/searches" element={<SearchesPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/viewings" element={<ViewingsPage />} />
           <Route path="/offers" element={<OffersPage />} />

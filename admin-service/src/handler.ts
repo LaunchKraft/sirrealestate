@@ -1,6 +1,6 @@
 // ci trigger
-import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb'
-import { unmarshall } from '@aws-sdk/util-dynamodb'
+import { DynamoDBClient, ScanCommand, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb'
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import {
   CognitoIdentityProviderClient,
   ListUsersCommand,
@@ -96,11 +96,6 @@ async function getUsers(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyR
   return json(200, { users, nextToken: cognitoResult.PaginationToken ?? null })
 }
 
-async function getSearches(): Promise<APIGatewayProxyResultV2> {
-  const items = await scanTable(SEARCH_RESULTS_TABLE)
-  return json(200, { searches: items })
-}
-
 async function getDocuments(): Promise<APIGatewayProxyResultV2> {
   const items = await scanTable(DOCUMENTS_TABLE)
   return json(200, { documents: items })
@@ -114,6 +109,70 @@ async function getViewings(): Promise<APIGatewayProxyResultV2> {
 async function getOffers(): Promise<APIGatewayProxyResultV2> {
   const items = await scanTable(OFFERS_TABLE)
   return json(200, { offers: items })
+}
+
+async function updateProfile(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const userId = event.queryStringParameters?.userId
+  if (!userId) return json(400, { error: 'userId required' })
+
+  const updates = JSON.parse(event.body ?? '{}') as Record<string, unknown>
+
+  const result = await dynamo.send(new GetItemCommand({
+    TableName: USER_PROFILE_TABLE,
+    Key: { userId: { S: userId } },
+  }))
+
+  const profile: Record<string, unknown> = result.Item ? unmarshall(result.Item) : { userId, searchProfiles: [], createdAt: new Date().toISOString() }
+
+  const allowedFields = [
+    'firstName', 'lastName', 'phone', 'buyerStatus', 'preApproved', 'preApprovalAmount',
+    'firstTimeHomeBuyer', 'currentCity', 'currentState', 'desiredCity', 'desiredState',
+    'listingViewingPreference',
+  ]
+
+  for (const field of allowedFields) {
+    if (field in updates) {
+      if (updates[field] === null || updates[field] === '') {
+        delete profile[field]
+      } else {
+        profile[field] = updates[field]
+      }
+    }
+  }
+
+  profile.updatedAt = new Date().toISOString()
+
+  await dynamo.send(new PutItemCommand({
+    TableName: USER_PROFILE_TABLE,
+    Item: marshall(profile, { removeUndefinedValues: true }),
+  }))
+
+  return json(200, { ok: true })
+}
+
+async function deleteSearchProfile(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const userId = event.queryStringParameters?.userId
+  const profileId = event.queryStringParameters?.profileId
+  if (!userId || !profileId) return json(400, { error: 'userId and profileId required' })
+
+  const result = await dynamo.send(new GetItemCommand({
+    TableName: USER_PROFILE_TABLE,
+    Key: { userId: { S: userId } },
+  }))
+
+  if (!result.Item) return json(404, { error: 'Profile not found' })
+
+  const profile = unmarshall(result.Item) as Record<string, unknown>
+  const searchProfiles = (profile.searchProfiles as Record<string, unknown>[] | undefined) ?? []
+  profile.searchProfiles = searchProfiles.filter((p) => p.profileId !== profileId)
+  profile.updatedAt = new Date().toISOString()
+
+  await dynamo.send(new PutItemCommand({
+    TableName: USER_PROFILE_TABLE,
+    Item: marshall(profile, { removeUndefinedValues: true }),
+  }))
+
+  return json(200, { ok: true })
 }
 
 async function setUserEnabled(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
@@ -140,7 +199,8 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     if (path === '/dashboard' && method === 'GET') return getDashboard()
     if (path === '/users' && method === 'GET') return getUsers(event)
     if (path === '/users' && method === 'PATCH') return setUserEnabled(event)
-    if (path === '/searches' && method === 'GET') return getSearches()
+    if (path === '/profile' && method === 'PATCH') return updateProfile(event)
+    if (path === '/searches' && method === 'DELETE') return deleteSearchProfile(event)
     if (path === '/documents' && method === 'GET') return getDocuments()
     if (path === '/viewings' && method === 'GET') return getViewings()
     if (path === '/offers' && method === 'GET') return getOffers()
