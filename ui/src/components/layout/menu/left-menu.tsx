@@ -9,7 +9,7 @@ import NiSearch from '@/icons/nexture/ni-search'
 import NiCalendar from '@/icons/nexture/ni-calendar'
 import NiListSquare from '@/icons/nexture/ni-list-square'
 import NiDuplicate from '@/icons/nexture/ni-duplicate'
-import NiMenuSplit from '@/icons/nexture/ni-menu-split'
+import NiHome from '@/icons/nexture/ni-home'
 import NiChevronRightSmall from '@/icons/nexture/ni-chevron-right-small'
 import keysImage from '@/assets/keys.png'
 import ProfilePanel from '@/components/sidebar/ProfilePanel'
@@ -201,7 +201,7 @@ export default function LeftMenu() {
 
         <SidebarSection
           title="My Home"
-          icon={<NiMenuSplit size="small" />}
+          icon={<NiHome size="small" />}
         >
           <Typography variant="caption" className="text-text-secondary px-2.5 italic">
             Coming soon
