@@ -62,7 +62,7 @@ export default function ChatPage() {
   const [conversation, setConversation] = useState<Conversation[]>(() => loadSession().conversation)
   const [messages, setMessages] = useState<ConversationMessage[]>(() => loadSession().messages)
   const [sessionId, setSessionId] = useState<string | undefined>(() => loadSession().sessionId)
-  const { invalidateProfile, invalidateSearchResults } = useSidebarRefresh()
+  const { invalidateProfile, invalidateSearchResults, invalidateDocuments, invalidateOffers } = useSidebarRefresh()
   const { profile, refetch: refetchProfile } = useUserProfile()
   const { upload, isUploading, nameMismatch, clearNameMismatch, updateProfileName } = useDocumentUpload()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -122,6 +122,8 @@ export default function ChatPage() {
       if (response.hasToolUse) {
         invalidateProfile()
         invalidateSearchResults()
+        invalidateDocuments()
+        invalidateOffers()
       }
 
       setConversation((prev) => [

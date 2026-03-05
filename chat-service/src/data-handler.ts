@@ -302,6 +302,19 @@ async function getDownloadUrl(userId: string, event: APIGatewayProxyEventV2): Pr
   return json(200, { downloadUrl })
 }
 
+async function getOffers(userId: string): Promise<APIGatewayProxyResultV2> {
+  const result = await dynamo.send(
+    new QueryCommand({
+      TableName: process.env.OFFERS_TABLE!,
+      KeyConditionExpression: 'userId = :uid',
+      ExpressionAttributeValues: { ':uid': { S: userId } },
+      ScanIndexForward: false,
+    }),
+  )
+  const offers = (result.Items ?? []).map((item: Record<string, AttributeValue>) => unmarshall(item) as Offer)
+  return json(200, { offers })
+}
+
 async function findOfferByToken(token: string): Promise<Offer | null> {
   const result = await dynamo.send(
     new QueryCommand({
@@ -468,6 +481,7 @@ export async function handler(
     const userId = claims?.['sub'] as string | undefined
     if (!userId) return json(401, { error: 'Unauthorized' })
 
+    if (path === '/offers' && event.requestContext.http.method === 'GET') return getOffers(userId)
     if (path === '/profile' && event.requestContext.http.method === 'GET') return getProfile(userId)
     if (path === '/profile' && event.requestContext.http.method === 'PATCH') return patchProfile(userId, event)
     if (path === '/search-results') return getSearchResults(userId)

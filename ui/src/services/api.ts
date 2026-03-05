@@ -5,6 +5,7 @@ import type { UserProfile } from '@/hooks/useUserProfile'
 import type { SearchResult } from '@/hooks/useSearchResults'
 import type { Viewing } from '@/hooks/useViewings'
 import type { UserDocument } from '@/hooks/useDocuments'
+import type { Offer } from '@/hooks/useOffers'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -59,6 +60,10 @@ export const searchResults = {
 
 export const viewings = {
   get: () => api.get<{ viewings: Viewing[] }>('/viewings'),
+}
+
+export const offers = {
+  list: () => api.get<{ offers: Offer[] }>('/offers'),
 }
 
 export const documents = {

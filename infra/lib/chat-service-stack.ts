@@ -203,6 +203,13 @@ export class ChatServiceStack extends Stack {
       authorizer: cognitoAuthorizer,
     })
 
+    new apigwv2.HttpRoute(this, 'OffersRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/offers', apigwv2.HttpMethod.GET),
+      integration: dataIntegration,
+      authorizer: cognitoAuthorizer,
+    })
+
     new apigwv2.HttpRoute(this, 'ProfileRoute', {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/profile', apigwv2.HttpMethod.GET),

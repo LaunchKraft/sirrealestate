@@ -15,10 +15,12 @@ import ProfilePanel from '@/components/sidebar/ProfilePanel'
 import SearchProfileCard from '@/components/sidebar/SearchProfileCard'
 import ViewingCard from '@/components/sidebar/ViewingCard'
 import DocumentPanel from '@/components/sidebar/DocumentPanel'
+import OfferCard from '@/components/sidebar/OfferCard'
 import { useUserProfile } from '@/hooks/useUserProfile'
 import { useSearchResults } from '@/hooks/useSearchResults'
 import { useViewings } from '@/hooks/useViewings'
 import { useDocuments } from '@/hooks/useDocuments'
+import { useOffers } from '@/hooks/useOffers'
 import { cn } from '@/lib/utils'
 
 function SidebarSection({
@@ -66,11 +68,12 @@ function SidebarSection({
 
 export default function LeftMenu() {
   const { sidebarOpen, sidebarWidth } = useLayoutContext()
-  const { registerProfileRefetch, registerSearchResultsRefetch, registerDocumentsRefetch } = useSidebarRefresh()
+  const { registerProfileRefetch, registerSearchResultsRefetch, registerDocumentsRefetch, registerOffersRefetch } = useSidebarRefresh()
   const { profile, refetch: refetchProfile } = useUserProfile()
   const { grouped, refetch: refetchSearchResults } = useSearchResults()
   const { viewings, refetch: refetchViewings } = useViewings()
   const { documents, refetch: refetchDocuments } = useDocuments()
+  const { offers, refetch: refetchOffers } = useOffers()
 
   useEffect(() => {
     registerProfileRefetch(refetchProfile)
@@ -85,11 +88,16 @@ export default function LeftMenu() {
   }, [registerDocumentsRefetch, refetchDocuments])
 
   useEffect(() => {
+    registerOffersRefetch(refetchOffers)
+  }, [registerOffersRefetch, refetchOffers])
+
+  useEffect(() => {
     if (!sidebarOpen) return
     refetchProfile()
     refetchSearchResults()
     refetchViewings()
     refetchDocuments()
+    refetchOffers()
   }, [sidebarOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -176,10 +184,15 @@ export default function LeftMenu() {
         <SidebarSection
           title="My Offers"
           icon={<NiDuplicate size="small" />}
+          contentClassName="flex flex-col gap-1.5 px-2 pb-3 pt-0"
         >
-          <Typography variant="caption" className="text-text-secondary px-2.5 italic">
-            Coming soon
-          </Typography>
+          {offers.length === 0 ? (
+            <Typography variant="caption" className="text-text-secondary px-2.5 italic">
+              Start an offer through chat →
+            </Typography>
+          ) : (
+            offers.map((o) => <OfferCard key={o.offerId} offer={o} />)
+          )}
         </SidebarSection>
 
         <SidebarSection
