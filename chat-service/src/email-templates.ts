@@ -352,3 +352,31 @@ export function viewingFeedbackRequestEmail(
 </html>`
   return { subject, html }
 }
+
+export function viewingCancellationToAgentEmail(
+  viewing: Viewing,
+  buyerName: string,
+  buyerEmail: string,
+): { subject: string; html: string } {
+  const subject = `Viewing Cancelled: ${viewing.listingAddress}`
+  const scheduledRow = viewing.proposedDateTime
+    ? `<p><strong>Was scheduled for:</strong> ${new Date(viewing.proposedDateTime).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}</p>`
+    : ''
+  const html = `
+<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+  <h2 style="color:#dc2626">Viewing Cancelled</h2>
+  <p>${viewing.agentName ? `Dear ${viewing.agentName},` : "Dear Seller's Agent,"}</p>
+  <p>The buyer has cancelled their viewing request for the following property:</p>
+  <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0">
+    <p style="margin-top:0"><strong>Property:</strong> ${viewing.listingAddress}</p>
+    <p><strong>Buyer:</strong> ${buyerName} &lt;${buyerEmail}&gt;</p>
+    ${scheduledRow}
+  </div>
+  <p>No further action is required on your end.</p>
+  <p style="color:#6b7280;font-size:12px;margin-top:24px">Sent via SirRealtor (sirrealtor.com)</p>
+</body>
+</html>`
+  return { subject, html }
+}

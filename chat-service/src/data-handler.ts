@@ -5,8 +5,8 @@ import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda'
-import type { UserProfile, SearchResult, Viewing, UserDocument, Offer } from './types'
-import { viewingAgentResponseToBuyerEmail, sellerDisclosureReceivedEmail, sellerDecisionEmail } from './email-templates'
+import type { UserProfile, SearchResult, Viewing, UserDocument, Offer, AvailabilityWindow } from './types'
+import { viewingAgentResponseToBuyerEmail, sellerDisclosureReceivedEmail, sellerDecisionEmail, viewingCancellationToAgentEmail } from './email-templates'
 import { buildListingUrl } from './mls/listing-url'
 import { classifyDocument } from './documents/classifier'
 import { handleDropboxSignWebhook } from './webhooks/dropbox-sign'
@@ -246,14 +246,15 @@ async function confirmUpload(userId: string, event: APIGatewayProxyEventV2): Pro
 }
 
 async function patchProfile(userId: string, event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
-  const body = JSON.parse(event.body ?? '{}') as { firstName?: string; lastName?: string }
-  const { firstName, lastName } = body
-  if (!firstName && !lastName) return json(400, { error: 'Nothing to update' })
+  const body = JSON.parse(event.body ?? '{}') as { firstName?: string; lastName?: string; availability?: AvailabilityWindow[] }
+  const { firstName, lastName, availability } = body
+  if (!firstName && !lastName && availability === undefined) return json(400, { error: 'Nothing to update' })
 
   const now = new Date().toISOString()
   const updates: Record<string, unknown> = { updatedAt: now }
   if (firstName) updates.firstName = firstName
   if (lastName) updates.lastName = lastName
+  if (availability !== undefined) updates.availability = availability
 
   const setExpressions = Object.keys(updates).map((k) => `#${k} = :${k}`)
   const expressionAttributeNames = Object.fromEntries(Object.keys(updates).map((k) => [`#${k}`, k]))
@@ -551,6 +552,61 @@ async function recordSellerDecision(event: APIGatewayProxyEventV2): Promise<APIG
   return json(200, { ok: true })
 }
 
+async function cancelViewing(userId: string, event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const { viewingId } = JSON.parse(event.body ?? '{}') as { viewingId?: string }
+  if (!viewingId) return json(400, { error: 'Missing viewingId' })
+
+  const result = await dynamo.send(
+    new GetItemCommand({
+      TableName: process.env.VIEWINGS_TABLE!,
+      Key: marshall({ userId, viewingId }),
+    }),
+  )
+  if (!result.Item) return json(404, { error: 'Viewing not found' })
+
+  const viewing = unmarshall(result.Item) as Viewing
+  if (viewing.status === 'cancelled') return json(200, { ok: true })
+
+  const now = new Date().toISOString()
+  await dynamo.send(
+    new UpdateItemCommand({
+      TableName: process.env.VIEWINGS_TABLE!,
+      Key: marshall({ userId, viewingId }),
+      UpdateExpression: 'SET #status = :s, cancelledAt = :ts',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: { ':s': { S: 'cancelled' }, ':ts': { S: now } },
+    }),
+  )
+
+  if (viewing.agentEmail) {
+    const profileResult = await dynamo.send(
+      new GetItemCommand({
+        TableName: process.env.USER_PROFILE_TABLE!,
+        Key: { userId: { S: userId } },
+        ProjectionExpression: 'firstName, lastName, email',
+      }),
+    )
+    const profile = profileResult.Item ? (unmarshall(profileResult.Item) as Pick<UserProfile, 'firstName' | 'lastName' | 'email'>) : null
+    const buyerName = profile?.firstName && profile?.lastName
+      ? `${profile.firstName} ${profile.lastName}`
+      : profile?.email ?? userId
+    const buyerEmail = profile?.email ?? userId
+
+    const { subject, html } = viewingCancellationToAgentEmail(viewing, buyerName, buyerEmail)
+    try {
+      await ses.send(new SendEmailCommand({
+        Source: 'noreply@sirrealtor.com',
+        Destination: { ToAddresses: [viewing.agentEmail] },
+        Message: { Subject: { Data: subject }, Body: { Html: { Data: html } } },
+      }))
+    } catch (err) {
+      console.error('Failed to send cancellation email to agent', err)
+    }
+  }
+
+  return json(200, { ok: true })
+}
+
 export async function handler(
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> {
@@ -582,6 +638,7 @@ export async function handler(
     if (!userId) return json(401, { error: 'Unauthorized' })
 
     if (path === '/notifications') return getNotifications(userId)
+    if (path === '/viewings/cancel' && event.requestContext.http.method === 'POST') return cancelViewing(userId, event)
     if (path === '/offers' && event.requestContext.http.method === 'GET') return getOffers(userId)
     if (path === '/profile' && event.requestContext.http.method === 'GET') return getProfile(userId)
     if (path === '/profile' && event.requestContext.http.method === 'PATCH') return patchProfile(userId, event)

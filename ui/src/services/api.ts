@@ -1,7 +1,7 @@
 // Zero React dependencies — portable as-is to any JS environment.
 import { fetchAuthSession } from 'aws-amplify/auth'
 import type { ChatRequest, ChatResponse } from '@/types'
-import type { UserProfile } from '@/hooks/useUserProfile'
+import type { UserProfile, AvailabilityWindow } from '@/hooks/useUserProfile'
 import type { SearchResult } from '@/hooks/useSearchResults'
 import type { Viewing } from '@/hooks/useViewings'
 import type { UserDocument } from '@/hooks/useDocuments'
@@ -50,7 +50,7 @@ export const chat = {
 
 export const profile = {
   get: () => api.get<UserProfile>('/profile'),
-  patch: (body: { firstName?: string; lastName?: string }) =>
+  patch: (body: { firstName?: string; lastName?: string; availability?: AvailabilityWindow[] }) =>
     api.patch<{ ok: boolean }>('/profile', body),
 }
 
@@ -60,6 +60,7 @@ export const searchResults = {
 
 export const viewings = {
   get: () => api.get<{ viewings: Viewing[] }>('/viewings'),
+  cancel: (viewingId: string) => api.post<{ ok: boolean }>('/viewings/cancel', { viewingId }),
 }
 
 export const offers = {

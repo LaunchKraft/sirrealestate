@@ -206,6 +206,13 @@ export class ChatServiceStack extends Stack {
       authorizer: cognitoAuthorizer,
     })
 
+    new apigwv2.HttpRoute(this, 'ViewingsCancelRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/viewings/cancel', apigwv2.HttpMethod.POST),
+      integration: dataIntegration,
+      authorizer: cognitoAuthorizer,
+    })
+
     new apigwv2.HttpRoute(this, 'DocumentsListRoute', {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/documents', apigwv2.HttpMethod.GET),
