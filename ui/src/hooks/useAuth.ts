@@ -29,6 +29,7 @@ export function useAuth(): UseAuthReturn {
 
   const handleSignOut = async () => {
     await signOut()
+    sessionStorage.clear()
     setUser(null)
     setEmail(undefined)
   }
