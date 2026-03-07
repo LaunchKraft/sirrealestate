@@ -138,7 +138,7 @@ export default function ViewingsPage() {
           <Calendar
             localizer={localizer}
             events={events}
-            defaultView="week"
+            defaultView="month"
             defaultDate={defaultDate}
             views={['month', 'week', 'day', 'agenda']}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
