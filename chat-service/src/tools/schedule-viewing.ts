@@ -122,9 +122,10 @@ export async function execute(
     let agentStatus: 'sent' | 'failed' = 'failed'
     try {
       const bcc = process.env.AGENT_EMAIL_BCC
+      const toAddress = process.env.SES_TEST_RECIPIENT ?? agentEmail
       await ses.send(new SendEmailCommand({
         Source: 'noreply@sirrealtor.com',
-        Destination: { ToAddresses: [agentEmail], ...(bcc ? { BccAddresses: [bcc] } : {}) },
+        Destination: { ToAddresses: [toAddress], ...(bcc ? { BccAddresses: [bcc] } : {}) },
         Message: { Subject: { Data: agentSubject }, Body: { Html: { Data: agentHtml } } },
       }))
       agentStatus = 'sent'

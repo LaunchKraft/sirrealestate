@@ -595,9 +595,10 @@ async function cancelViewing(userId: string, event: APIGatewayProxyEventV2): Pro
     const { subject, html } = viewingCancellationToAgentEmail(viewing, buyerName, buyerEmail)
     try {
       const bcc = process.env.AGENT_EMAIL_BCC
+      const toAddress = process.env.SES_TEST_RECIPIENT ?? viewing.agentEmail
       await ses.send(new SendEmailCommand({
         Source: 'noreply@sirrealtor.com',
-        Destination: { ToAddresses: [viewing.agentEmail], ...(bcc ? { BccAddresses: [bcc] } : {}) },
+        Destination: { ToAddresses: [toAddress], ...(bcc ? { BccAddresses: [bcc] } : {}) },
         Message: { Subject: { Data: subject }, Body: { Html: { Data: html } } },
       }))
     } catch (err) {
