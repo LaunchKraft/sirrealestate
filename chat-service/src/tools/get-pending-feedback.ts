@@ -25,10 +25,12 @@ export async function execute(userId: string): Promise<{ viewings: Viewing[]; co
       TableName: process.env.VIEWINGS_TABLE!,
       KeyConditionExpression: 'userId = :uid',
       FilterExpression:
-        'attribute_not_exists(feedback) AND (attribute_not_exists(proposedDateTime) OR proposedDateTime < :now)',
+        'attribute_not_exists(feedback) AND #status = :confirmed AND (attribute_not_exists(proposedDateTime) OR proposedDateTime < :now)',
+      ExpressionAttributeNames: { '#status': 'status' },
       ExpressionAttributeValues: {
         ':uid': { S: userId },
         ':now': { S: now },
+        ':confirmed': { S: 'confirmed' },
       },
     }),
   )
