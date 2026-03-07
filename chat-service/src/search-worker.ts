@@ -17,7 +17,7 @@ import type { Listing } from './mls/mls-provider'
 import { RentcastProvider } from './mls/rentcast-provider'
 import { buildListingUrl } from './mls/listing-url'
 import {
-  newListingMatchEmail,
+  newListingsDigestEmail,
   viewingFeedbackRequestEmail,
 } from './email-templates'
 
@@ -118,7 +118,6 @@ async function processSearchProfile(
   console.log(`Found ${newListings.length} new listings for user=${user.userId} profile=${profileId}`)
 
   const now = new Date().toISOString()
-  const chatUrl = 'https://app.sirrealtor.com/chat'
 
   // Enrich listings with platform URL based on user's preference
   const enrichedListings = newListings.map((listing) => ({
@@ -150,55 +149,60 @@ async function processSearchProfile(
     )
   }
 
-  // Send notifications for new listings
+  // Send a single consolidated digest email for all new listings
   const notificationChannel = searchProfile.notificationPreferences.email ? 'email' : null
   if (notificationChannel && user.email) {
-    for (const listing of enrichedListings) {
-      const { subject, html } = newListingMatchEmail(listing as import('./types').Listing, chatUrl)
-      let sendStatus: 'sent' | 'failed' = 'failed'
-      try {
-        await sendNotification('email', { to: user.email, subject, html })
-        sendStatus = 'sent'
+    const listingsUrl = `https://app.sirrealtor.com/listings/${profileId}`
+    const { subject, html } = newListingsDigestEmail(
+      enrichedListings as import('./types').Listing[],
+      searchProfile.name,
+      listingsUrl,
+      enrichedListings.length,
+    )
+    let sendStatus: 'sent' | 'failed' = 'failed'
+    try {
+      await sendNotification('email', { to: user.email, subject, html })
+      sendStatus = 'sent'
 
-        // Only mark as notified when the email actually sent
-        await dynamo.send(
-          new UpdateItemCommand({
-            TableName: process.env.SEARCH_RESULTS_TABLE!,
-            Key: marshall({
-              userId: user.userId,
-              profileIdListingId: `${profileId}#${listing.listingId}`,
+      // Mark all new listings as notified
+      await Promise.all(
+        enrichedListings.map((listing) =>
+          dynamo.send(
+            new UpdateItemCommand({
+              TableName: process.env.SEARCH_RESULTS_TABLE!,
+              Key: marshall({ userId: user.userId, profileIdListingId: `${profileId}#${listing.listingId}` }),
+              UpdateExpression: 'SET notified = :true',
+              ExpressionAttributeValues: { ':true': { BOOL: true } },
             }),
-            UpdateExpression: 'SET notified = :true',
-            ExpressionAttributeValues: { ':true': { BOOL: true } },
-          }),
-        )
-      } catch (err) {
-        console.error(`Failed to send notification for listing ${listing.listingId}`, err)
-      }
+          ),
+        ),
+      )
+    } catch (err) {
+      console.error(`Failed to send digest notification for profile ${profileId}`, err)
+    }
 
-      // Record the notification attempt regardless of send success
-      try {
-        const notification: Notification = {
-          userId: user.userId,
-          notificationId: randomUUID(),
-          type: 'new_listing',
-          channel: 'email',
-          direction: 'to_user',
-          recipientAddress: user.email,
-          subject,
-          body: html,
-          sentAt: now,
-          status: sendStatus,
-        }
-        await dynamo.send(
-          new PutItemCommand({
-            TableName: process.env.NOTIFICATIONS_TABLE!,
-            Item: marshall(notification, { removeUndefinedValues: true }),
-          }),
-        )
-      } catch (err) {
-        console.error(`Failed to record notification for listing ${listing.listingId}`, err)
+    // Record one notification for the digest
+    try {
+      const notification: Notification = {
+        userId: user.userId,
+        notificationId: randomUUID(),
+        type: 'new_listing',
+        channel: 'email',
+        direction: 'to_user',
+        recipientAddress: user.email,
+        subject,
+        body: html,
+        sentAt: now,
+        status: sendStatus,
       }
+      await dynamo.send(
+        new PutItemCommand({
+          TableName: process.env.NOTIFICATIONS_TABLE!,
+          Item: marshall(notification, { removeUndefinedValues: true }),
+        }),
+      )
+    } catch (err) {
+      console.error(`Failed to record digest notification for profile ${profileId}`, err)
     }
   }
 }

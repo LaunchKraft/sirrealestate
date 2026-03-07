@@ -189,23 +189,37 @@ export function earnestMoneyReceivedEmail(
   return { subject, html }
 }
 
-export function newListingMatchEmail(listing: Listing, chatUrl: string): { subject: string; html: string } {
-  const subject = `New match: ${listing.address} — $${listing.price.toLocaleString()}`
+export function newListingsDigestEmail(
+  listings: Listing[],
+  profileName: string,
+  listingsUrl: string,
+  totalCount: number,
+): { subject: string; html: string } {
+  const preview = listings.slice(0, 3)
+  const subject = `${totalCount} new match${totalCount === 1 ? '' : 'es'} for "${profileName}"`
+
+  const listingCards = preview.map((listing) => `
+  <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:12px 0">
+    <h3 style="margin:0 0 8px">${listing.address}</h3>
+    <p style="margin:4px 0"><strong>Price:</strong> $${listing.price.toLocaleString()}</p>
+    <p style="margin:4px 0"><strong>Bedrooms:</strong> ${listing.bedrooms} &nbsp; <strong>Bathrooms:</strong> ${listing.bathrooms}${listing.sqft ? ` &nbsp; <strong>Size:</strong> ${listing.sqft.toLocaleString()} sqft` : ''}</p>
+    ${listing.listingUrl ? `<p style="margin:8px 0 0"><a href="${listing.listingUrl}" style="color:#1a56db">View on listing site →</a></p>` : ''}
+  </div>`).join('')
+
+  const moreNote = totalCount > 3
+    ? `<p style="color:#6b7280;margin:4px 0">+ ${totalCount - 3} more — see all on your listings page</p>`
+    : ''
+
   const html = `
 <!DOCTYPE html>
 <html>
 <body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
-  <h2 style="color:#1a56db">New Property Match Found</h2>
-  <p>SirRealtor found a new listing that matches your search criteria:</p>
-  <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0">
-    <h3 style="margin-top:0">${listing.address}</h3>
-    <p><strong>Price:</strong> $${listing.price.toLocaleString()}</p>
-    <p><strong>Bedrooms:</strong> ${listing.bedrooms} &nbsp; <strong>Bathrooms:</strong> ${listing.bathrooms}</p>
-    ${listing.sqft ? `<p><strong>Size:</strong> ${listing.sqft.toLocaleString()} sqft</p>` : ''}
-    ${listing.listingUrl ? `<p><a href="${listing.listingUrl}" style="color:#1a56db">View Listing →</a></p>` : ''}
-  </div>
-  <a href="${chatUrl}" style="background:#1a56db;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">
-    Chat with SirRealtor →
+  <h2 style="color:#1a56db">${totalCount} New Match${totalCount === 1 ? '' : 'es'} Found</h2>
+  <p>SirRealtor found new listings matching your search <strong>"${profileName}"</strong>:</p>
+  ${listingCards}
+  ${moreNote}
+  <a href="${listingsUrl}" style="background:#1a56db;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:16px">
+    View All Matches →
   </a>
   <p style="color:#6b7280;font-size:12px;margin-top:24px">You're receiving this because you enabled monitoring for this search. Reply to opt out.</p>
 </body>
