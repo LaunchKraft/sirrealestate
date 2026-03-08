@@ -536,8 +536,8 @@ export default function ViewingsPage() {
               backgroundImage: 'none',
             },
             '& .rbc-toolbar button.rbc-active': {
-              backgroundColor: 'var(--primary)',
-              borderColor: 'var(--primary)',
+              backgroundColor: 'hsl(var(--primary))',
+              borderColor: 'hsl(var(--primary))',
               color: '#fff',
               boxShadow: 'none',
             },
