@@ -49,7 +49,7 @@ export default function FavoritesCard() {
             color="error"
             size="small"
             className="shrink-0"
-            sx={{ height: 10, fontSize: '0.4rem', '& .MuiChip-label': { px: 0.5 } }}
+            sx={{ height: 13, fontSize: '0.5rem', '& .MuiChip-label': { px: 0.75 } }}
           />
         </Box>
       </Box>
