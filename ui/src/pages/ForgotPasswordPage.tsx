@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
           <Box className="flex flex-col gap-10 px-8 sm:px-14">
             <Box className="flex flex-col items-center gap-2">
               <img src={logo} alt="Sir Realtor" className="w-48 h-auto" />
-              <Typography variant="h5" className="font-heading font-bold tracking-tight text-primary">
+              <Typography variant="h5" className="font-heading font-bold tracking-tight text-primary" sx={{ fontWeight: 700 }}>
                 Sir Realtor
               </Typography>
             </Box>
