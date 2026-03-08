@@ -97,6 +97,74 @@ export default function ChatPage() {
     }
   }, [searchParams])
 
+  const applyResponse = useCallback((response: Awaited<ReturnType<typeof chat.send>>) => {
+    setSessionId(response.sessionId)
+    setMessages(response.messages)
+    if (response.hasToolUse) {
+      invalidateProfile()
+      invalidateSearchResults()
+      invalidateDocuments()
+      invalidateOffers()
+      invalidateViewings()
+    }
+    setConversation((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        type: 'AI',
+        message: response.reply,
+        animate: true,
+      },
+    ])
+  }, [invalidateProfile, invalidateSearchResults, invalidateDocuments, invalidateOffers, invalidateViewings])
+
+  const handleLocationAction = useCallback(async (toolUseId: string, pendingMessages: ConversationMessage[], pendingSessionId: string | undefined) => {
+    let locationData: Record<string, unknown>
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 }),
+      )
+      const { latitude, longitude } = position.coords
+
+      // Reverse-geocode using Google Maps Geocoding API
+      const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&result_type=locality|administrative_area_level_1&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+      const geocodeRes = await fetch(geocodeUrl)
+      const geocodeData = await geocodeRes.json() as { results?: Array<{ address_components: Array<{ types: string[]; long_name: string; short_name: string }> }> }
+
+      let city = ''
+      let state = ''
+      for (const result of geocodeData.results ?? []) {
+        for (const component of result.address_components) {
+          if (component.types.includes('locality') && !city) city = component.long_name
+          if (component.types.includes('administrative_area_level_1') && !state) state = component.short_name
+        }
+        if (city && state) break
+      }
+
+      locationData = { latitude, longitude, city, state }
+    } catch {
+      locationData = { error: 'Location permission denied or unavailable' }
+    }
+
+    const toolResultMessage: ConversationMessage = {
+      role: 'user',
+      content: [{ type: 'tool_result', tool_use_id: toolUseId, content: JSON.stringify(locationData) }],
+    }
+    const messagesWithResult = [...pendingMessages, toolResultMessage]
+
+    try {
+      const response = await chat.send({ messages: messagesWithResult, sessionId: pendingSessionId })
+      applyResponse(response)
+    } catch {
+      setConversation((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), type: 'AI', message: 'Sorry, something went wrong. Please try again.', animate: false },
+      ])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [applyResponse, sessionId])
+
   const sendMessage = async (message: string) => {
     if (!message.trim() || isLoading) return
 
@@ -118,27 +186,16 @@ export default function ChatPage() {
 
     try {
       const response = await chat.send({ messages: updatedMessages, sessionId })
-      setSessionId(response.sessionId)
-      setMessages(response.messages)
 
-      // Invalidate sidebar data after any tool use
-      if (response.hasToolUse) {
-        invalidateProfile()
-        invalidateSearchResults()
-        invalidateDocuments()
-        invalidateOffers()
-        invalidateViewings()
+      if (response.clientAction === 'request_location') {
+        // Don't add an AI bubble — hand off to location handler which will re-POST
+        setMessages(response.messages)
+        setSessionId(response.sessionId)
+        await handleLocationAction(response.toolUseId!, response.messages, response.sessionId)
+        return
       }
 
-      setConversation((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          type: 'AI',
-          message: response.reply,
-          animate: true,
-        },
-      ])
+      applyResponse(response)
     } catch (err) {
       setConversation((prev) => [
         ...prev,

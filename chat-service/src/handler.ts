@@ -21,6 +21,7 @@ import * as GeneratePurchaseAgreement from './tools/generate-purchase-agreement'
 import * as GenerateEarnestMoneyAgreement from './tools/generate-earnest-money-agreement'
 import * as GenerateAgencyDisclosure from './tools/generate-agency-disclosure'
 import * as SubmitOffer from './tools/submit-offer'
+import * as RequestLocation from './tools/request-location'
 import type { ConversationMessage } from './types'
 
 const SYSTEM_PROMPT =
@@ -71,7 +72,14 @@ const SYSTEM_PROMPT =
   'email address?" if not already known, then call update_offer to save it. ' +
   'Call submit_offer only after the user explicitly confirms they are ready to submit. ' +
   'After submission, inform the user that the seller\'s agent has been emailed and typically responds within 24–48 hours. ' +
-  'If the user later asks about the offer status, call get_offers and report the sellerResponse.status field.'
+  'If the user later asks about the offer status, call get_offers and report the sellerResponse.status field. ' +
+  'LOCATION: If the user asks to find properties "in my area", "near me", or any location-relative phrase, ' +
+  'first ask: "Do you mind if I request your device\'s location?" ' +
+  'Only call request_location after the user explicitly agrees. ' +
+  'The tool result will contain { latitude, longitude, city, state } on success, or { error } if denied. ' +
+  'On success, immediately call update_user_details to save currentCity and currentState, ' +
+  'then proceed with the location-based search. ' +
+  'On error, apologize and ask the user to type their city and state instead.'
 
 const secretsManager = new SecretsManagerClient({})
 const dynamo = new DynamoDBClient({})
@@ -103,6 +111,7 @@ const TOOLS: Anthropic.Tool[] = [
   GenerateEarnestMoneyAgreement.definition,
   GenerateAgencyDisclosure.definition,
   SubmitOffer.definition,
+  RequestLocation.definition,
 ] as Anthropic.Tool[]
 
 async function executeTool(
@@ -217,6 +226,22 @@ export async function handler(
       if (response.stop_reason === 'tool_use') {
         hasToolUse = true
         const toolUseBlocks = response.content.filter((b): b is ToolUseBlock => b.type === 'tool_use')
+
+        // request_location is handled client-side — return early so the browser can prompt
+        const locationBlock = toolUseBlocks.find((b) => b.name === 'request_location')
+        if (locationBlock) {
+          return {
+            statusCode: 200,
+            body: JSON.stringify({
+              reply: '',
+              sessionId: resolvedSessionId,
+              messages: conversationMessages as ConversationMessage[],
+              hasToolUse: false,
+              clientAction: 'request_location',
+              toolUseId: locationBlock.id,
+            }),
+          }
+        }
 
         const toolResults = await Promise.all(
           toolUseBlocks.map(async (block) => {

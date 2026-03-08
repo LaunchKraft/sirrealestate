@@ -33,4 +33,6 @@ export interface ChatResponse {
   sessionId: string
   messages: ConversationMessage[]
   hasToolUse: boolean
+  clientAction?: string
+  toolUseId?: string
 }
