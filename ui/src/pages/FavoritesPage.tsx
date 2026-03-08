@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Box, InputAdornment, TextField, Typography } from '@mui/material'
+import { useState } from 'react'
+import { Box, Typography } from '@mui/material'
 import { useFavoritesContext } from '@/components/favorites/FavoritesContext'
 import ListingsTable from './listings/ListingsTable'
 import ListingDetailDialog from './listings/ListingDetailDialog'
@@ -11,11 +11,6 @@ export default function FavoritesPage() {
   const [selectedListing, setSelectedListing] = useState<SearchResult | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const [minPrice, setMinPrice] = useState('')
-  const [maxPrice, setMaxPrice] = useState('')
-  const [minBeds, setMinBeds] = useState('')
-  const [minBaths, setMinBaths] = useState('')
-
   // Convert Favorite → SearchResult for ListingsTable
   const allResults: SearchResult[] = favorites.map((f) => ({
     userId: '',
@@ -26,17 +21,6 @@ export default function FavoritesPage() {
     matchedAt: f.favoritedAt,
     notified: true,
   }))
-
-  const filtered = useMemo(() => {
-    return allResults.filter((r) => {
-      const l = r.listingData
-      if (minPrice && l.price < Number(minPrice)) return false
-      if (maxPrice && l.price > Number(maxPrice)) return false
-      if (minBeds && l.bedrooms < Number(minBeds)) return false
-      if (minBaths && l.bathrooms < Number(minBaths)) return false
-      return true
-    })
-  }, [allResults, minPrice, maxPrice, minBeds, minBaths])
 
   function handleListingSelect(result: SearchResult) {
     setSelectedListing(result)
@@ -50,46 +34,8 @@ export default function FavoritesPage() {
           Favorites
         </Typography>
         <Typography variant="body2" className="text-text-secondary">
-          {filtered.length} listing{filtered.length !== 1 ? 's' : ''}
-          {filtered.length !== allResults.length && ` (${allResults.length} total)`}
+          {allResults.length} listing{allResults.length !== 1 ? 's' : ''}
         </Typography>
-      </Box>
-
-      <Box className="flex flex-wrap gap-2">
-        <TextField
-          label="Min price"
-          size="small"
-          type="number"
-          value={minPrice}
-          onChange={(e) => setMinPrice(e.target.value)}
-          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-          sx={{ width: 140 }}
-        />
-        <TextField
-          label="Max price"
-          size="small"
-          type="number"
-          value={maxPrice}
-          onChange={(e) => setMaxPrice(e.target.value)}
-          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-          sx={{ width: 140 }}
-        />
-        <TextField
-          label="Min beds"
-          size="small"
-          type="number"
-          value={minBeds}
-          onChange={(e) => setMinBeds(e.target.value)}
-          sx={{ width: 110 }}
-        />
-        <TextField
-          label="Min baths"
-          size="small"
-          type="number"
-          value={minBaths}
-          onChange={(e) => setMinBaths(e.target.value)}
-          sx={{ width: 110 }}
-        />
       </Box>
 
       <Box sx={{ height: 'calc(100vh - 16rem)', minHeight: 300 }}>
@@ -98,7 +44,7 @@ export default function FavoritesPage() {
             No favorites yet — heart a listing to save it here.
           </Typography>
         ) : (
-          <ListingsTable results={filtered} onListingClick={handleListingSelect} />
+          <ListingsTable results={allResults} onListingClick={handleListingSelect} />
         )}
       </Box>
 
