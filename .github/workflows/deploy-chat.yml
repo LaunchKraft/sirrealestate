@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - chat-service/**
+      - infra/lib/chat-service-stack.ts
 
 concurrency:
   group: cdk-deploy
