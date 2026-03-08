@@ -300,6 +300,18 @@ export class ChatServiceStack extends Stack {
       integration: dataIntegration,
     })
 
+    new apigwv2.HttpRoute(this, 'FavoritesListRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/favorites', apigwv2.HttpMethod.GET),
+      integration: dataIntegration,
+    })
+
+    new apigwv2.HttpRoute(this, 'FavoritesToggleRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/favorites/toggle', apigwv2.HttpMethod.POST),
+      integration: dataIntegration,
+    })
+
     new CfnOutput(this, 'AnthropicModelId', {
       value: ANTHROPIC_MODEL_ID,
       description: 'Anthropic model used by the chat Lambda',
