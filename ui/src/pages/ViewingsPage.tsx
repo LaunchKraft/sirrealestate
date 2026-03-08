@@ -551,7 +551,7 @@ export default function ViewingsPage() {
             events={events}
             defaultView="month"
             defaultDate={defaultDate}
-            views={['month', 'week', 'day', 'agenda']}
+            views={['month', 'week', 'day']}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             eventPropGetter={eventStyleGetter as any}
             onSelectEvent={handleEventSelect}
