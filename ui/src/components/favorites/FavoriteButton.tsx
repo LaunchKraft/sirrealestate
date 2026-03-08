@@ -1,5 +1,6 @@
 import { IconButton } from '@mui/material'
 import { useFavoritesContext } from './FavoritesContext'
+import { useFloatingChat } from '@/components/chat/floating-chat-context'
 import type { Listing } from '@/hooks/useSearchResults'
 
 interface FavoriteButtonProps {
@@ -11,11 +12,21 @@ interface FavoriteButtonProps {
 
 export default function FavoriteButton({ listingId, listingData, profileId, size = 'small' }: FavoriteButtonProps) {
   const { isFavorited, toggle } = useFavoritesContext()
+  const { setPendingMessage, openChat } = useFloatingChat()
   const favorited = isFavorited(listingId)
 
   function handleClick(e: React.MouseEvent) {
     e.stopPropagation()
     toggle(listingId, listingData, profileId)
+    if (!favorited) {
+      const sqftPart = listingData.sqft ? `, ${listingData.sqft.toLocaleString()} sqft` : ''
+      setPendingMessage(
+        `I just favorited this listing: ${listingData.address} — $${listingData.price.toLocaleString()}, ` +
+          `${listingData.bedrooms} bed / ${listingData.bathrooms} bath${sqftPart}. ` +
+          `Can you give me a detailed breakdown of this property and how well it matches my search criteria?`,
+      )
+      openChat()
+    }
   }
 
   const iconSize = size === 'small' ? 16 : 20
