@@ -48,7 +48,8 @@ export default function FavoritesCard() {
             label={favorites.length}
             color="error"
             size="small"
-            className="h-4 shrink-0 text-[10px]"
+            className="shrink-0"
+            sx={{ height: 10, fontSize: '0.4rem', '& .MuiChip-label': { px: 0.5 } }}
           />
         </Box>
       </Box>
