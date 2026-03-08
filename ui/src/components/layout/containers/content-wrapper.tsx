@@ -5,7 +5,7 @@ export default function ContentWrapper({ children }: PropsWithChildren) {
   return (
     <Paper
       elevation={0}
-      sx={{ backgroundColor: 'rgba(0, 0, 0, 0.03)' }}
+      sx={{ backgroundColor: 'hsl(var(--background))' }}
       className="flex min-h-[calc(100vh-7.5rem)] w-full min-w-0 rounded-xl px-4 py-5 sm:rounded-4xl sm:py-6 md:py-8 lg:px-12"
     >
       <Box className="flex w-full">
