@@ -1,6 +1,7 @@
 import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react'
 
-const SIDEBAR_WIDTH = 280
+const SIDEBAR_WIDTH_MOBILE = 280
+const SIDEBAR_WIDTH_DESKTOP = 322
 
 type LayoutContextType = {
   sidebarOpen: boolean
@@ -32,7 +33,7 @@ export default function LayoutContextProvider({ children }: PropsWithChildren) {
     <LayoutContext.Provider
       value={{
         sidebarOpen,
-        sidebarWidth: SIDEBAR_WIDTH,
+        sidebarWidth: isMobile ? SIDEBAR_WIDTH_MOBILE : SIDEBAR_WIDTH_DESKTOP,
         isMobile,
         toggleSidebar: () => setSidebarOpen((v) => !v),
         closeSidebar: () => setSidebarOpen(false),
