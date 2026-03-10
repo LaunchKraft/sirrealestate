@@ -54,7 +54,7 @@ function SidebarSection({
           className={cn('shrink-0 transition-transform', open && 'rotate-90')}
         />
         <Box className="flex items-center gap-2">
-          {icon}
+          <span className="text-primary">{icon}</span>
           <Typography variant="h6" className="text-primary text-sm font-semibold">
             {title}
           </Typography>
