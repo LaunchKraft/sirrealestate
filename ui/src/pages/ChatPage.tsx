@@ -28,13 +28,28 @@ import type { ConversationMessage } from '@/types'
 const INTRO_CONVERSATION: Conversation = {
   id: 'intro',
   type: 'AI',
-  message: "Hello, I'm Sir Realtor and I'll be your virtual real estate concierge. Let's chat about what you're looking for in a home.",
+  message: `Hi, I'm Sir Realtor. I'm here to help you find your next home. Here's a brief rundown of how the process works.
+
+---
+
+## Your Home-Buying Journey
+
+### 1. Property Search
+We start by building your search profile — location, budget, bedrooms, and must-haves. From there, I'll continuously surface matching listings and update you as new properties hit the market. You can save favorites, compare options, and refine your criteria anytime through chat.
+
+### 2. Viewings
+Once you've spotted properties you love, I'll help coordinate viewings with listing agents. Set your availability once and I'll handle the scheduling. All your upcoming and past viewings are tracked in the sidebar so nothing slips through the cracks.
+
+### 3. Making an Offer
+When you're ready to move forward on a property, I'll walk you through the offer process — price, contingencies, and timeline. I'll help you put together a competitive offer and keep you informed as negotiations progress.
+
+### 4. Closing
+After an offer is accepted, I'll guide you through the final steps: inspections, financing, document signing, and key handoff. I'll keep track of your documents and deadlines so the closing process stays on track.
+
+---
+
+*Ready to get started? Just tell me what you're looking for in a home.*`,
   animate: false,
-  suggestedQuestions: [
-    'What neighborhoods in my area have the best value?',
-    'How do I evaluate if a property is priced fairly?',
-    'What should I look for in a home inspection?',
-  ],
 }
 
 const SESSION_KEY = 'chat_session'
