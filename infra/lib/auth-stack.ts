@@ -158,6 +158,7 @@ export class AuthStack extends Stack {
           cognito.OAuthScope.OPENID,
           cognito.OAuthScope.EMAIL,
           cognito.OAuthScope.PROFILE,
+          cognito.OAuthScope.COGNITO_ADMIN,
         ],
         callbackUrls: [
           `https://${props.appDomain}`,

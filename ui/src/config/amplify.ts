@@ -11,7 +11,7 @@ export const amplifyConfig: ResourcesConfig = {
         loginWith: {
           oauth: {
             domain: oauthDomain,
-            scopes: ['openid', 'email', 'profile'],
+            scopes: ['openid', 'email', 'profile', 'aws.cognito.signin.user.admin'],
             redirectSignIn: ['https://app.sirrealtor.com', 'http://localhost:5173'],
             redirectSignOut: ['https://app.sirrealtor.com', 'http://localhost:5173'],
             responseType: 'code',
