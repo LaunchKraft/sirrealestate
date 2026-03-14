@@ -1,6 +1,7 @@
 // Only imports from aws-amplify/auth (no @aws-amplify/ui-react) — portable to React Native.
 import { useState, useEffect } from 'react'
 import { getCurrentUser, fetchUserAttributes, signOut, type AuthUser } from 'aws-amplify/auth'
+import { Hub } from 'aws-amplify/utils'
 
 interface UseAuthReturn {
   user: AuthUser | null
@@ -25,6 +26,23 @@ export function useAuth(): UseAuthReturn {
         setEmail(undefined)
       })
       .finally(() => setIsLoading(false))
+
+    // Handle OAuth redirect callback (e.g. Sign in with Google)
+    const unsubscribe = Hub.listen('auth', ({ payload }) => {
+      if (payload.event === 'signedIn') {
+        Promise.all([getCurrentUser(), fetchUserAttributes()])
+          .then(([authUser, attrs]) => {
+            setUser(authUser)
+            setEmail(attrs.email)
+            setIsLoading(false)
+          })
+          .catch(() => {})
+      } else if (payload.event === 'signedOut') {
+        setUser(null)
+        setEmail(undefined)
+      }
+    })
+    return unsubscribe
   }, [])
 
   const handleSignOut = async () => {

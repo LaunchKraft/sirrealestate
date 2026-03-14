@@ -1,5 +1,6 @@
-import { Stack, RemovalPolicy, CfnOutput, type StackProps } from 'aws-cdk-lib'
+import { Stack, RemovalPolicy, CfnOutput, SecretValue, type StackProps } from 'aws-cdk-lib'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
+import * as ssm from 'aws-cdk-lib/aws-ssm'
 import type { Construct } from 'constructs'
 
 interface AuthStackProps extends StackProps {
@@ -88,6 +89,8 @@ export class AuthStack extends Stack {
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id, props)
 
+    const googleClientId = ssm.StringParameter.valueForStringParameter(this, '/sirrealtor/google-client-id')
+
     this.userPool = new cognito.UserPool(this, 'UserPool', {
       selfSignUpEnabled: true,
       // Email is the only identifier — no separate username field exposed to users.
@@ -114,6 +117,25 @@ export class AuthStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
     })
 
+    const googleProvider = new cognito.UserPoolIdentityProviderGoogle(this, 'GoogleProvider', {
+      userPool: this.userPool,
+      clientId: googleClientId,
+      clientSecretValue: SecretValue.ssmSecure('/sirrealtor/google-client-secret'),
+      scopes: ['openid', 'email', 'profile'],
+      attributeMapping: {
+        email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+        givenName: cognito.ProviderAttribute.GOOGLE_GIVEN_NAME,
+        familyName: cognito.ProviderAttribute.GOOGLE_FAMILY_NAME,
+      },
+    })
+
+    // Cognito hosted domain — required for the OAuth 2.0 authorization code grant flow.
+    // Domain prefix must be globally unique.
+    const COGNITO_DOMAIN_PREFIX = 'sirrealtor'
+    this.userPool.addDomain('CognitoDomain', {
+      cognitoDomain: { domainPrefix: COGNITO_DOMAIN_PREFIX },
+    })
+
     this.userPoolClient = new cognito.UserPoolClient(this, 'UserPoolClient', {
       userPool: this.userPool,
       // generateSecret must be false — browser clients cannot keep secrets.
@@ -121,7 +143,19 @@ export class AuthStack extends Stack {
       authFlows: {
         userSrp: true,
       },
+      supportedIdentityProviders: [
+        cognito.UserPoolClientIdentityProvider.COGNITO,
+        cognito.UserPoolClientIdentityProvider.GOOGLE,
+      ],
       oAuth: {
+        flows: {
+          authorizationCodeGrant: true,
+        },
+        scopes: [
+          cognito.OAuthScope.OPENID,
+          cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.PROFILE,
+        ],
         callbackUrls: [
           `https://${props.appDomain}`,
           'http://localhost:5173',
@@ -132,6 +166,7 @@ export class AuthStack extends Stack {
         ],
       },
     })
+    this.userPoolClient.node.addDependency(googleProvider)
 
     new CfnOutput(this, 'UserPoolId', {
       value: this.userPool.userPoolId,
@@ -146,6 +181,11 @@ export class AuthStack extends Stack {
     new CfnOutput(this, 'Region', {
       value: this.region,
       description: 'AWS region — same as VITE_COGNITO_USER_POOL_ID prefix',
+    })
+
+    new CfnOutput(this, 'CognitoOAuthDomain', {
+      value: `${COGNITO_DOMAIN_PREFIX}.auth.${this.region}.amazoncognito.com`,
+      description: 'VITE_COGNITO_OAUTH_DOMAIN',
     })
   }
 }

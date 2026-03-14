@@ -21,6 +21,7 @@ import MuiLayerOverride from '@/theme/mui-layer-override'
 import logo from '@/assets/logo.png'
 import NiEyeClose from '@/icons/nexture/ni-eye-close'
 import NiEyeOpen from '@/icons/nexture/ni-eye-open'
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 
 export default function SignUpPage() {
   const navigate = useNavigate()
@@ -233,6 +234,8 @@ export default function SignUpPage() {
                 </Button>
               </Box>
             )}
+
+            <GoogleSignInButton />
 
             <Divider className="text-text-secondary my-0 text-sm" />
 

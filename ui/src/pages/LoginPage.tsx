@@ -22,6 +22,7 @@ import logo from '@/assets/logo.png'
 import NiEyeClose from '@/icons/nexture/ni-eye-close'
 import NiEyeOpen from '@/icons/nexture/ni-eye-open'
 import { useAuth } from '@/hooks/useAuth'
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -136,6 +137,8 @@ export default function LoginPage() {
                 {loading ? 'Signing in…' : 'Continue'}
               </Button>
             </Box>
+
+            <GoogleSignInButton />
 
             <Divider className="text-text-secondary my-0 text-sm" />
 

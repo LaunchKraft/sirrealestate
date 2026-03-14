@@ -184,17 +184,23 @@ export async function handler(
   const claims = event.requestContext.authorizer.jwt.claims
   const userId = claims['sub'] as string
   const userEmail = (claims['email'] as string | undefined) ?? ''
+  const givenName = claims['given_name'] as string | undefined
+  const familyName = claims['family_name'] as string | undefined
   const resolvedSessionId = sessionId ?? userId
 
   const client = await getClient()
   const conversationMessages: MessageParam[] = messages as MessageParam[]
 
   // Ensure a profile row exists before the tool loop so get_user_profile always returns real data.
+  // For Google federated sign-ins, seed firstName/lastName from the JWT claims on first creation.
   const now = new Date().toISOString()
+  const profileSeed: Record<string, unknown> = { userId, email: userEmail, searchProfiles: [], createdAt: now, updatedAt: now }
+  if (givenName) profileSeed.firstName = givenName
+  if (familyName) profileSeed.lastName = familyName
   await dynamo.send(
     new PutItemCommand({
       TableName: process.env.USER_PROFILE_TABLE!,
-      Item: marshall({ userId, email: userEmail, searchProfiles: [], createdAt: now, updatedAt: now }),
+      Item: marshall(profileSeed),
       ConditionExpression: 'attribute_not_exists(userId)',
     }),
   ).catch(() => { /* item already exists — ignore ConditionalCheckFailedException */ })
