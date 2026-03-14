@@ -1,5 +1,6 @@
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@mui/material'
-import { signInWithRedirect, signOut } from 'aws-amplify/auth'
+import { signInWithRedirect } from 'aws-amplify/auth'
 
 export const OAUTH_IN_PROGRESS_KEY = 'oauth_in_progress'
 
@@ -13,13 +14,19 @@ const GoogleLogo = () => (
 )
 
 export default function GoogleSignInButton({ label }: { label: string }) {
+  const navigate = useNavigate()
+
   const handleClick = async () => {
-    // Clear any stale local Amplify state (leftover tokens, PKCE state) before starting
-    // a new OAuth flow. This prevents 400 errors from cognito-idp when cached tokens
-    // reference a session that no longer exists (e.g. user deleted in Cognito console).
-    await signOut({ global: false }).catch(() => { /* no active session — ignore */ })
-    sessionStorage.setItem(OAUTH_IN_PROGRESS_KEY, '1')
-    await signInWithRedirect({ provider: 'Google' })
+    try {
+      sessionStorage.setItem(OAUTH_IN_PROGRESS_KEY, '1')
+      await signInWithRedirect({ provider: 'Google' })
+    } catch (err: unknown) {
+      sessionStorage.removeItem(OAUTH_IN_PROGRESS_KEY)
+      // Already authenticated — just go to chat
+      if (err instanceof Error && err.name === 'UserAlreadyAuthenticatedException') {
+        navigate('/chat', { replace: true })
+      }
+    }
   }
 
   return (
