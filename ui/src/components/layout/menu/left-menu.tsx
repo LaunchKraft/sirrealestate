@@ -51,7 +51,7 @@ function SidebarSection({
       >
         <NiChevronRightSmall
           size="small"
-          className={cn('shrink-0 transition-transform', open && 'rotate-90')}
+          className={cn('shrink-0 text-primary transition-transform', open && 'rotate-90')}
         />
         <Box className="flex items-center gap-2">
           <span className="text-primary">{icon}</span>
