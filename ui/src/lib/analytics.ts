@@ -1,16 +1,12 @@
-function ga(...args: Parameters<Gtag.Gtag>) {
-  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-    window.gtag(...args)
-  }
-}
-
 export function trackPageView(path: string) {
-  ga('event', 'page_view', { page_path: path })
+  if (typeof window.gtag !== 'function') return
+  window.gtag('event', 'page_view', { page_path: path })
 }
 
 export function trackEvent(
   eventName: string,
   params?: Record<string, string | number | boolean>,
 ) {
-  ga('event', eventName, params)
+  if (typeof window.gtag !== 'function') return
+  window.gtag('event', eventName, params as Gtag.CustomParams)
 }
