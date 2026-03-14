@@ -1,5 +1,8 @@
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@mui/material'
 import { signInWithRedirect } from 'aws-amplify/auth'
+
+export const OAUTH_IN_PROGRESS_KEY = 'oauth_in_progress'
 
 const GoogleLogo = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -11,13 +14,30 @@ const GoogleLogo = () => (
 )
 
 export default function GoogleSignInButton({ label }: { label: string }) {
+  const navigate = useNavigate()
+
+  const handleClick = async () => {
+    try {
+      sessionStorage.setItem(OAUTH_IN_PROGRESS_KEY, '1')
+      await signInWithRedirect({ provider: 'Google' })
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'UserAlreadyAuthenticatedException') {
+        sessionStorage.removeItem(OAUTH_IN_PROGRESS_KEY)
+        navigate('/chat', { replace: true })
+      } else {
+        sessionStorage.removeItem(OAUTH_IN_PROGRESS_KEY)
+        throw err
+      }
+    }
+  }
+
   return (
     <Button
       variant="outlined"
       color="grey"
       fullWidth
       startIcon={<GoogleLogo />}
-      onClick={() => signInWithRedirect({ provider: 'Google' })}
+      onClick={handleClick}
     >
       {label}
     </Button>

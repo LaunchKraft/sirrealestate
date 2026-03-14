@@ -27,13 +27,13 @@ import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 export default function LoginPage() {
   const navigate = useNavigate()
   const { user, isLoading } = useAuth()
-
-  if (!isLoading && user) return <Navigate to="/chat" replace />
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  if (!isLoading && user) return <Navigate to="/chat" replace />
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { getCurrentUser, fetchUserAttributes, signOut, type AuthUser } from 'aws-amplify/auth'
 import { Hub } from 'aws-amplify/utils'
+import { OAUTH_IN_PROGRESS_KEY } from '@/components/auth/GoogleSignInButton'
 
 interface UseAuthReturn {
   user: AuthUser | null
@@ -16,11 +17,13 @@ export function useAuth(): UseAuthReturn {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // If the URL contains ?code=, Amplify is mid-way through exchanging the OAuth code
-    // for tokens. getCurrentUser() would fail at this point, causing AuthGuard to
-    // redirect to /login before auth completes. Keep isLoading: true and wait for the
+    // If GoogleSignInButton set this flag, we're mid-way through the OAuth code exchange.
+    // getCurrentUser() would fail at this point (tokens not yet stored), causing AuthGuard
+    // to redirect to /login before auth completes. Keep isLoading: true and wait for the
     // Hub signedIn event instead.
-    const isOAuthCallback = new URLSearchParams(window.location.search).has('code')
+    // Note: we cannot rely on ?code= in the URL because the React Router wildcard route
+    // (<Navigate to="/chat">) strips query params before useAuth runs on the /chat route.
+    const isOAuthCallback = sessionStorage.getItem(OAUTH_IN_PROGRESS_KEY) === '1'
 
     if (!isOAuthCallback) {
       Promise.all([getCurrentUser(), fetchUserAttributes()])
@@ -37,6 +40,7 @@ export function useAuth(): UseAuthReturn {
 
     const unsubscribe = Hub.listen('auth', ({ payload }) => {
       if (payload.event === 'signedIn') {
+        sessionStorage.removeItem(OAUTH_IN_PROGRESS_KEY)
         Promise.all([getCurrentUser(), fetchUserAttributes()])
           .then(([authUser, attrs]) => {
             setUser(authUser)
@@ -48,6 +52,7 @@ export function useAuth(): UseAuthReturn {
         setUser(null)
         setEmail(undefined)
       } else if (payload.event === 'signInWithRedirect_failure') {
+        sessionStorage.removeItem(OAUTH_IN_PROGRESS_KEY)
         setIsLoading(false)
       }
     })
