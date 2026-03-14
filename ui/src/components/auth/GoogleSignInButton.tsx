@@ -10,7 +10,7 @@ const GoogleLogo = () => (
   </svg>
 )
 
-export default function GoogleSignInButton() {
+export default function GoogleSignInButton({ label }: { label: string }) {
   return (
     <Button
       variant="outlined"
@@ -19,7 +19,7 @@ export default function GoogleSignInButton() {
       startIcon={<GoogleLogo />}
       onClick={() => signInWithRedirect({ provider: 'Google' })}
     >
-      Continue with Google
+      {label}
     </Button>
   )
 }

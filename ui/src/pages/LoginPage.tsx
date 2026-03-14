@@ -138,7 +138,7 @@ export default function LoginPage() {
               </Button>
             </Box>
 
-            <GoogleSignInButton />
+            <GoogleSignInButton label="Sign in with Google" />
 
             <Divider className="text-text-secondary my-0 text-sm" />
 

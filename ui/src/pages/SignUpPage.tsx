@@ -235,7 +235,7 @@ export default function SignUpPage() {
               </Box>
             )}
 
-            <GoogleSignInButton />
+            <GoogleSignInButton label="Sign up with Google" />
 
             <Divider className="text-text-secondary my-0 text-sm" />
 
