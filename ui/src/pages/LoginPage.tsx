@@ -23,6 +23,7 @@ import NiEyeClose from '@/icons/nexture/ni-eye-close'
 import NiEyeOpen from '@/icons/nexture/ni-eye-open'
 import { useAuth } from '@/hooks/useAuth'
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
+import { trackEvent } from '@/lib/analytics'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -46,6 +47,7 @@ export default function LoginPage() {
     try {
       const { isSignedIn } = await signIn({ username: email, password })
       if (isSignedIn) {
+        trackEvent('login', { method: 'email' })
         navigate('/chat', { replace: true })
       } else {
         setError('Sign-in requires additional steps. Please contact support.')

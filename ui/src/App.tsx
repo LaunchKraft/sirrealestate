@@ -1,4 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { trackPageView } from '@/lib/analytics'
+
+function RouteTracker() {
+  const { pathname, search } = useLocation()
+  useEffect(() => { trackPageView(pathname + search) }, [pathname, search])
+  return null
+}
 import AuthGuard from '@/components/auth/AuthGuard'
 import AppLayout from '@/components/layout/AppLayout'
 import ChatPage from '@/pages/ChatPage'
@@ -15,6 +23,7 @@ import FavoritesPage from '@/pages/FavoritesPage'
 export default function App() {
   return (
     <BrowserRouter>
+      <RouteTracker />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/sign-up" element={<SignUpPage />} />

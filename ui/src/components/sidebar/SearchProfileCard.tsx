@@ -8,6 +8,7 @@ import type { SearchProfile } from '@/hooks/useUserProfile'
 import type { SearchResult } from '@/hooks/useSearchResults'
 import { searchProfiles } from '@/services/api'
 import { cn } from '@/lib/utils'
+import { trackEvent } from '@/lib/analytics'
 
 interface SearchProfileCardProps {
   profile: SearchProfile
@@ -42,6 +43,7 @@ export default function SearchProfileCard({ profile, results, onDeleted }: Searc
     setDeleting(true)
     try {
       await searchProfiles.delete(profile.profileId)
+      trackEvent('search_profile_deleted')
       setConfirmOpen(false)
       onDeleted()
     } finally {

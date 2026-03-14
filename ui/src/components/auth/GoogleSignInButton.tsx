@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@mui/material'
 import { signInWithRedirect } from 'aws-amplify/auth'
+import { trackEvent } from '@/lib/analytics'
 
 export const OAUTH_IN_PROGRESS_KEY = 'oauth_in_progress'
 
@@ -18,6 +19,7 @@ export default function GoogleSignInButton({ label }: { label: string }) {
 
   const handleClick = async () => {
     try {
+      trackEvent('login_initiated', { method: 'google' })
       sessionStorage.setItem(OAUTH_IN_PROGRESS_KEY, '1')
       await signInWithRedirect({ provider: 'Google' })
     } catch (err: unknown) {

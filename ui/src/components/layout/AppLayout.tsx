@@ -16,9 +16,7 @@ import FloatingChat from '@/components/chat/FloatingChat'
 function AppLayoutInner() {
   const { pathname, search } = useLocation()
 
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname, search])
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname, search])
 
   return (
     <FloatingChatProvider>

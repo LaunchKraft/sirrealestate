@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { documents as documentsApi, profile as profileApi } from '@/services/api'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
+import { trackEvent } from '@/lib/analytics'
 
 // Maps documentType → the extractedData key that holds person names (string[]).
 // Mirrors the nameField in the backend taxonomy.
@@ -52,6 +53,10 @@ export function useDocumentUpload() {
         sizeBytes: file.size,
       })
 
+      trackEvent('document_uploaded', {
+        document_type: doc.documentType ?? 'unknown',
+        file_size_kb: Math.round(file.size / 1024),
+      })
       invalidateDocuments()
 
       // Name mismatch check for classified documents that have a name field

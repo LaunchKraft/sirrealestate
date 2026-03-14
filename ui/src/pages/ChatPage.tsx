@@ -23,6 +23,7 @@ import NiMicrophone from '@/icons/nexture/ni-microphone'
 import NiSendRight from '@/icons/nexture/ni-send-right'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { cn } from '@/lib/utils'
+import { trackEvent } from '@/lib/analytics'
 import type { ConversationMessage } from '@/types'
 
 const INTRO_CONVERSATION: Conversation = {
@@ -116,6 +117,7 @@ export default function ChatPage() {
     setSessionId(response.sessionId)
     setMessages(response.messages)
     if (response.hasToolUse) {
+      trackEvent('ai_tool_used')
       invalidateProfile()
       invalidateSearchResults()
       invalidateDocuments()
@@ -189,6 +191,7 @@ export default function ChatPage() {
       message,
     }
 
+    trackEvent('chat_message_sent', { message_length: message.trim().length })
     setConversation((prev) => [...prev, userMsg])
     setInputValue('')
     setIsLoading(true)
