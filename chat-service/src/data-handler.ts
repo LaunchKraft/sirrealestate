@@ -48,7 +48,7 @@ async function deleteSearchProfile(userId: string, profileId: string): Promise<A
   return json(200, { ok: true })
 }
 
-async function getProfile(userId: string): Promise<APIGatewayProxyResultV2> {
+async function getProfile(userId: string, email?: string, givenName?: string, familyName?: string): Promise<APIGatewayProxyResultV2> {
   const result = await dynamo.send(
     new GetItemCommand({
       TableName: process.env.USER_PROFILE_TABLE!,
@@ -56,7 +56,20 @@ async function getProfile(userId: string): Promise<APIGatewayProxyResultV2> {
     }),
   )
   if (!result.Item) {
-    return json(200, { userId, searchProfiles: [], createdAt: null })
+    // Seed the profile on first load using claims from the ID token.
+    // Cognito includes email/given_name/family_name when the 'profile' scope is granted,
+    // which covers both native and Google-federated users.
+    const now = new Date().toISOString()
+    const seed: Record<string, unknown> = { userId, searchProfiles: [], createdAt: now, updatedAt: now }
+    if (email) seed.email = email
+    if (givenName) seed.firstName = givenName
+    if (familyName) seed.lastName = familyName
+    await dynamo.send(new PutItemCommand({
+      TableName: process.env.USER_PROFILE_TABLE!,
+      Item: marshall(seed),
+      ConditionExpression: 'attribute_not_exists(userId)',
+    })).catch(() => { /* concurrent request already created it — ignore */ })
+    return json(200, seed)
   }
   return json(200, unmarshall(result.Item) as UserProfile)
 }
@@ -713,13 +726,16 @@ export async function handler(
     }).authorizer?.jwt?.claims
     const userId = claims?.['sub'] as string | undefined
     if (!userId) return json(401, { error: 'Unauthorized' })
+    const claimEmail = claims?.['email'] as string | undefined
+    const claimGivenName = claims?.['given_name'] as string | undefined
+    const claimFamilyName = claims?.['family_name'] as string | undefined
 
     if (path === '/notifications') return getNotifications(userId)
     if (path === '/viewings/cancel' && event.requestContext.http.method === 'POST') return cancelViewing(userId, event)
     if (path === '/offers' && event.requestContext.http.method === 'GET') return getOffers(userId)
     if (path === '/favorites' && event.requestContext.http.method === 'GET') return getFavorites(userId)
     if (path === '/favorites/toggle' && event.requestContext.http.method === 'POST') return toggleFavorite(userId, event)
-    if (path === '/profile' && event.requestContext.http.method === 'GET') return getProfile(userId)
+    if (path === '/profile' && event.requestContext.http.method === 'GET') return getProfile(userId, claimEmail, claimGivenName, claimFamilyName)
     if (path === '/profile' && event.requestContext.http.method === 'PATCH') return patchProfile(userId, event)
     if (path.startsWith('/search-profiles/') && event.requestContext.http.method === 'DELETE') {
       const profileId = path.split('/')[2]
