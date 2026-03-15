@@ -110,9 +110,9 @@ export default function ChatMessage({
 
   return (
     <Box className="flex w-full flex-row items-start justify-end gap-2">
-      <Card className={cn('ms-auto max-w-xs !rounded-3xl md:max-w-lg')}>
+      <Card className={cn('ms-auto max-w-xs !rounded-3xl md:max-w-lg !bg-primary')}>
         <CardContent className="relative">
-          <Typography variant="body1" className="whitespace-pre-line">
+          <Typography variant="body1" className="whitespace-pre-line text-white">
             {conversation.message}
           </Typography>
         </CardContent>

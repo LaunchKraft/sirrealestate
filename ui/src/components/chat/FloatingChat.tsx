@@ -205,7 +205,7 @@ export default function FloatingChat() {
                 <Box
                   className={cn(
                     'rounded-2xl px-3 py-2 text-sm',
-                    msg.type === 'AI' ? 'bg-background-paper' : 'bg-primary/10',
+                    msg.type === 'AI' ? 'bg-background-paper' : 'bg-primary text-white',
                   )}
                 >
                   {msg.type === 'AI' ? (
