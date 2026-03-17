@@ -9,6 +9,7 @@ export interface SirRealtorConfig {
   apiDomain: string       // api.sirrealtor.com  (api-<env>.sirrealtor.com for lower envs)
   adminDomain: string     // admin.sirrealtor.com
   adminApiDomain: string  // admin-api.sirrealtor.com
+  wwwCertArn?: string     // pre-created ACM cert ARN for sirrealtor.com + www.sirrealtor.com
 }
 
 export function getConfig(app: App): SirRealtorConfig {
@@ -19,6 +20,7 @@ export function getConfig(app: App): SirRealtorConfig {
   // Optional: set to 'staging', 'dev', etc. for lower environments.
   // Omit (or leave empty) for production.
   const envName = app.node.tryGetContext('envName') as string | undefined
+  const wwwCertArn = app.node.tryGetContext('wwwCertArn') as string | undefined
 
   if (!prodAccount || prodAccount === 'REPLACE_WITH_PROD_ACCOUNT_ID') {
     throw new Error('cdk.json: "prodAccount" must be set to your AWS account ID')
@@ -38,5 +40,6 @@ export function getConfig(app: App): SirRealtorConfig {
     apiDomain: `api${envSuffix}.${baseDomain}`,
     adminDomain: `admin${envSuffix}.${baseDomain}`,
     adminApiDomain: `admin-api${envSuffix}.${baseDomain}`,
+    wwwCertArn,
   }
 }

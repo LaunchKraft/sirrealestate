@@ -1,0 +1,62 @@
+name: Deploy www Infra
+
+# Manually triggered — run this once after the ACM certificate has been
+# pre-created and its ARN stored as the WWW_CERT_ARN GitHub secret.
+#
+# HOW TO SET UP THE CERTIFICATE (one-time):
+#   1. Go to ACM in the AWS console — make sure you are in us-east-1.
+#   2. Request a public certificate for:
+#        - sirrealtor.com  (primary domain)
+#        - www.sirrealtor.com  (additional name)
+#   3. Choose "DNS validation". ACM will immediately show you the CNAME
+#      validation records (one record covers both names).
+#   4. Add that CNAME to the sirrealtor.com zone in the parent account.
+#   5. Wait for the certificate status to become "Issued" (~a few minutes).
+#   6. Copy the Certificate ARN and save it as the WWW_CERT_ARN secret in
+#      this repo's GitHub settings (Settings → Secrets → Actions).
+#   7. Run this workflow.
+#
+# AFTER THIS WORKFLOW SUCCEEDS — DNS records to create in the parent account:
+#   Check the SirRealtor-Www stack outputs for the CloudFrontDomain value, then:
+#   - sirrealtor.com  → A (Alias) record pointing to the CloudFront domain
+#   - www.sirrealtor.com → CNAME pointing to the CloudFront domain
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: CDK Deploy www Stack
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: CDK deploy www stack
+        run: |
+          pnpm --filter infra exec -- cdk deploy \
+            SirRealtor-Www \
+            --require-approval never \
+            -c prodAccount=${{ secrets.AWS_ACCOUNT_ID }} \
+            -c wwwCertArn=${{ secrets.WWW_CERT_ARN }}
