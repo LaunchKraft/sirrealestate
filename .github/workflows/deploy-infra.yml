@@ -61,5 +61,7 @@ jobs:
             SirRealtor-AdminUi \
             SirRealtor-AdminAuth \
             SirRealtor-AdminApi \
+            SirRealtor-WwwCert \
+            SirRealtor-Www \
             --require-approval never \
             -c prodAccount=${{ secrets.AWS_ACCOUNT_ID }}

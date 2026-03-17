@@ -17,6 +17,8 @@ import { AdminUiStack } from '../lib/admin-ui-stack'
 import { AdminAuthStack } from '../lib/admin-auth-stack'
 import { AdminApiStack } from '../lib/admin-api-stack'
 import { AdminServiceStack } from '../lib/admin-service-stack'
+import { WwwCertStack } from '../lib/www-cert-stack'
+import { WwwStack } from '../lib/www-stack'
 
 const app = new App()
 const config = getConfig(app)
@@ -174,3 +176,23 @@ adminServiceStack.addDependency(adminApiStack)
 adminServiceStack.addDependency(adminAuthStack)
 adminServiceStack.addDependency(dataStack)
 adminServiceStack.addDependency(authStack)
+
+// ---------------------------------------------------------------------------
+// Marketing website — sirrealtor.com and www.sirrealtor.com
+// ---------------------------------------------------------------------------
+// FIRST DEPLOY: the cert stack will pause waiting for DNS validation.
+// Go to ACM in the AWS console, find the pending certificate, and add the
+// CNAME validation record to the sirrealtor.com zone in the parent account.
+// ---------------------------------------------------------------------------
+
+const wwwCertStack = new WwwCertStack(app, 'SirRealtor-WwwCert', {
+  env: certEnv,
+  baseDomain: config.baseDomain,
+})
+
+const wwwStack = new WwwStack(app, 'SirRealtor-Www', {
+  env: prodEnv,
+  baseDomain: config.baseDomain,
+  certificate: wwwCertStack.certificate,
+})
+wwwStack.addDependency(wwwCertStack)

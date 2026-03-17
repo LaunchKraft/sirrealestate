@@ -1,0 +1,46 @@
+name: Deploy www
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - www/**
+
+concurrency:
+  group: www-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Sync to S3
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Read CloudFormation outputs
+        run: |
+          BUCKET=$(aws cloudformation describe-stacks --stack-name SirRealtor-Www \
+            --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
+            --output text)
+          CF_ID=$(aws cloudformation describe-stacks --stack-name SirRealtor-Www \
+            --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" \
+            --output text)
+          echo "BUCKET=$BUCKET" >> "$GITHUB_ENV"
+          echo "CF_ID=$CF_ID" >> "$GITHUB_ENV"
+
+      - name: Sync to S3
+        run: aws s3 sync www/ s3://$BUCKET --delete
+
+      - name: Invalidate CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"
