@@ -150,7 +150,7 @@ export default function FloatingChat() {
       {/* Chat panel */}
       {isOpen && (
         <Card
-          sx={{ zIndex: 1400 }}
+          sx={{ zIndex: 1400, padding: 0 }}
           className="fixed bottom-24 right-4 flex w-80 flex-col overflow-hidden shadow-xl"
           style={{ maxHeight: '32rem' }}
         >
