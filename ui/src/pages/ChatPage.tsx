@@ -304,7 +304,7 @@ export default function ChatPage() {
                 minRows={2}
                 maxRows={3}
                 className="MuiInputBase-root MuiInput-root outlined autosize bg-background-paper! w-full resize-none pe-28! outline-none!"
-                placeholder="Ask SirRealtor anything about real estate…"
+                placeholder="Let's find your new home…"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}

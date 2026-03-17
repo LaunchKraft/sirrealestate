@@ -180,7 +180,11 @@ export default function FloatingChat() {
           <Box className="flex flex-1 flex-col gap-3 overflow-y-auto p-3" style={{ minHeight: 0 }}>
             {conversation.length === 0 && !isLoading && (
               <Typography variant="caption" className="text-text-secondary text-center">
-                Ask me anything about real estate.
+                {pathname === '/viewings'
+                ? 'Would you like to schedule or change a viewing or add some availability?'
+                : pathname.startsWith('/listings/')
+                  ? 'Would you like to know more about one of these properties?'
+                  : 'Ask me anything about real estate.'}
               </Typography>
             )}
             {conversation.map((msg) => (
