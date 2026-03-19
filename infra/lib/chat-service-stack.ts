@@ -102,6 +102,7 @@ export class ChatServiceStack extends Stack {
     props.documentBucket.grantReadWrite(chatLambda)
     props.documentsTable.grantReadWriteData(chatLambda)
     props.offersTable.grantReadWriteData(chatLambda)
+    props.waitlistTable.grantReadWriteData(chatLambda)
 
     // SES permission for schedule_viewing tool
     chatLambda.addToRolePolicy(

@@ -1,6 +1,6 @@
 // ci trigger 4
 import Anthropic from '@anthropic-ai/sdk'
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb'
+import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb'
 import { marshall } from '@aws-sdk/util-dynamodb'
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
 import type { MessageParam, ToolUseBlock } from '@anthropic-ai/sdk/resources/messages'
@@ -23,6 +23,7 @@ import * as GenerateAgencyDisclosure from './tools/generate-agency-disclosure'
 import * as SubmitOffer from './tools/submit-offer'
 import * as DeleteSearchProfile from './tools/delete-search-profile'
 import * as RequestLocation from './tools/request-location'
+import * as SaveBetaFeedback from './tools/save-beta-feedback'
 import type { ConversationMessage } from './types'
 
 const SYSTEM_PROMPT =
@@ -116,6 +117,7 @@ const TOOLS: Anthropic.Tool[] = [
   SubmitOffer.definition,
   DeleteSearchProfile.definition,
   RequestLocation.definition,
+  SaveBetaFeedback.definition,
 ] as Anthropic.Tool[]
 
 async function executeTool(
@@ -159,6 +161,8 @@ async function executeTool(
       return GenerateAgencyDisclosure.execute(userId, input as Parameters<typeof GenerateAgencyDisclosure.execute>[1])
     case 'submit_offer':
       return SubmitOffer.execute(userId, input as Parameters<typeof SubmitOffer.execute>[1], userEmail)
+    case 'save_beta_feedback':
+      return SaveBetaFeedback.execute(userEmail, input as Parameters<typeof SaveBetaFeedback.execute>[1])
     default:
       return { error: `Unknown tool: ${name}` }
   }
@@ -211,7 +215,34 @@ export async function handler(
     }),
   ).catch(() => { /* item already exists — ignore ConditionalCheckFailedException */ })
 
-  const systemPrompt = `${SYSTEM_PROMPT}\n\nUser context: email=${userEmail}`
+  // Check if this is a beta user so we can personalise the system prompt
+  let isBetaUser = false
+  if (userEmail && process.env.WAITLIST_TABLE) {
+    const waitlistResult = await dynamo.send(
+      new GetItemCommand({
+        TableName: process.env.WAITLIST_TABLE,
+        Key: { email: { S: userEmail.toLowerCase() } },
+        ProjectionExpression: '#s',
+        ExpressionAttributeNames: { '#s': 'status' },
+      }),
+    ).catch(() => null)
+    const status = waitlistResult?.Item?.status?.S
+    isBetaUser = status === 'invited_beta' || status === 'accepted_beta'
+  }
+
+  const betaPromptSection = isBetaUser
+    ? '\n\nBETA USER: This user is a valued Sir Realtor beta participant. ' +
+      'At the start of fresh conversations (when there is only one user message so far), ' +
+      'warmly welcome them to the beta, thank them personally for their early support, ' +
+      'and let them know their feedback directly shapes the product. ' +
+      'Tell them they can share product feedback with you at any time during any conversation ' +
+      'and you will save it instantly. ' +
+      'Whenever the user shares any feedback about Sir Realtor — features, experience, bugs, ' +
+      'things they love, things they want improved — immediately call save_beta_feedback ' +
+      'with their exact words before responding.'
+    : ''
+
+  const systemPrompt = `${SYSTEM_PROMPT}${betaPromptSection}\n\nUser context: email=${userEmail}`
 
   try {
     let reply = ''
