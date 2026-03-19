@@ -8,6 +8,7 @@ import UsersPage from '@/pages/UsersPage'
 import DocumentsPage from '@/pages/DocumentsPage'
 import ViewingsPage from '@/pages/ViewingsPage'
 import OffersPage from '@/pages/OffersPage'
+import WaitlistPage from '@/pages/WaitlistPage'
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/viewings" element={<ViewingsPage />} />
           <Route path="/offers" element={<OffersPage />} />
+          <Route path="/waitlist" element={<WaitlistPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

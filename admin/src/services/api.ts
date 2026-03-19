@@ -36,6 +36,12 @@ export interface DashboardCounts {
   offers: number
 }
 
+export interface WaitlistEntry {
+  email: string
+  status: 'waitlist' | 'invited_beta' | 'accepted_beta'
+  createdAt: string
+}
+
 export interface AdminUser {
   userId: string
   email: string
@@ -72,5 +78,13 @@ export const api = {
   },
   offers: {
     list: () => get<{ offers: Record<string, unknown>[] }>('/offers'),
+  },
+  waitlist: {
+    list: () => get<{ entries: WaitlistEntry[] }>('/waitlist'),
+    delete: (email: string) => del<{ ok: boolean }>(`/waitlist?email=${encodeURIComponent(email)}`),
+    updateStatus: (email: string, status: string) =>
+      patch<{ ok: boolean }>(`/waitlist?email=${encodeURIComponent(email)}`, { status }),
+    invite: (email: string) =>
+      request<{ ok: boolean }>('POST', `/waitlist/invite?email=${encodeURIComponent(email)}`),
   },
 }

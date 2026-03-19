@@ -21,6 +21,7 @@ interface AdminServiceStackProps extends StackProps {
   viewingsTable: dynamodb.Table
   documentsTable: dynamodb.Table
   offersTable: dynamodb.Table
+  waitlistTable: dynamodb.Table
 }
 
 export class AdminServiceStack extends Stack {
@@ -39,6 +40,7 @@ export class AdminServiceStack extends Stack {
         VIEWINGS_TABLE: props.viewingsTable.tableName,
         DOCUMENTS_TABLE: props.documentsTable.tableName,
         OFFERS_TABLE: props.offersTable.tableName,
+        WAITLIST_TABLE: props.waitlistTable.tableName,
       },
       bundling: { externalModules: [] as string[] },
     })
@@ -49,6 +51,15 @@ export class AdminServiceStack extends Stack {
     props.viewingsTable.grantReadData(adminLambda)
     props.documentsTable.grantReadData(adminLambda)
     props.offersTable.grantReadData(adminLambda)
+    props.waitlistTable.grantReadWriteData(adminLambda)
+
+    // SES permission for sending beta invite emails
+    adminLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:SendEmail'],
+        resources: [`arn:aws:ses:${this.region}:${this.account}:identity/sirrealtor.com`],
+      }),
+    )
 
     // Permission to list and manage users in the consumer Cognito pool
     adminLambda.addToRolePolicy(
@@ -85,6 +96,10 @@ export class AdminServiceStack extends Stack {
       { id: 'DocumentsRoute', routePath: '/documents', method: apigwv2.HttpMethod.GET },
       { id: 'ViewingsRoute', routePath: '/viewings', method: apigwv2.HttpMethod.GET },
       { id: 'OffersRoute', routePath: '/offers', method: apigwv2.HttpMethod.GET },
+      { id: 'WaitlistListRoute', routePath: '/waitlist', method: apigwv2.HttpMethod.GET },
+      { id: 'WaitlistDeleteRoute', routePath: '/waitlist', method: apigwv2.HttpMethod.DELETE },
+      { id: 'WaitlistPatchRoute', routePath: '/waitlist', method: apigwv2.HttpMethod.PATCH },
+      { id: 'WaitlistInviteRoute', routePath: '/waitlist/invite', method: apigwv2.HttpMethod.POST },
     ]
 
     for (const route of routes) {

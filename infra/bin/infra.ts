@@ -105,6 +105,7 @@ const chatServiceStack = new ChatServiceStack(app, 'SirRealtor-Chat', {
   documentsTable: dataStack.documentsTable,
   offersTable: dataStack.offersTable,
   favoritesTable: dataStack.favoritesTable,
+  waitlistTable: dataStack.waitlistTable,
 })
 chatServiceStack.addDependency(apiStack)
 chatServiceStack.addDependency(authStack)
@@ -171,6 +172,7 @@ const adminServiceStack = new AdminServiceStack(app, 'SirRealtor-AdminService', 
   viewingsTable: dataStack.viewingsTable,
   documentsTable: dataStack.documentsTable,
   offersTable: dataStack.offersTable,
+  waitlistTable: dataStack.waitlistTable,
 })
 adminServiceStack.addDependency(adminApiStack)
 adminServiceStack.addDependency(adminAuthStack)

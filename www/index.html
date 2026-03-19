@@ -69,6 +69,85 @@
       font-size: 0.8rem;
       color: #94a3b8;
     }
+
+    .waitlist-form {
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 360px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .waitlist-form p {
+      font-size: 0.9rem;
+      color: #475569;
+      margin-bottom: 0.25rem;
+    }
+
+    .waitlist-input-row {
+      display: flex;
+      width: 100%;
+      gap: 0.5rem;
+    }
+
+    .waitlist-input-row input {
+      flex: 1;
+      padding: 0.625rem 1rem;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .waitlist-input-row input:focus {
+      border-color: #00b4d8;
+    }
+
+    .waitlist-input-row button {
+      padding: 0.625rem 1.25rem;
+      background: #00b4d8;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .waitlist-input-row button:hover {
+      background: #0077b6;
+    }
+
+    .waitlist-input-row button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .waitlist-message {
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .waitlist-message.success {
+      background: #ecfdf5;
+      color: #065f46;
+    }
+
+    .waitlist-message.error {
+      background: #fef2f2;
+      color: #991b1b;
+    }
   </style>
 </head>
 <body>
@@ -77,7 +156,62 @@
     <h1>Sir Realtor</h1>
     <p class="tagline">Your AI-powered real estate agent.<br>Something exciting is on the way.</p>
     <span class="badge">Coming Soon</span>
+
+    <div class="waitlist-form">
+      <p>Get early access — join the waitlist.</p>
+      <div class="waitlist-input-row">
+        <input id="waitlist-email" type="email" placeholder="you@example.com" autocomplete="email" />
+        <button id="waitlist-btn" type="button">Join</button>
+      </div>
+      <div id="waitlist-message" class="waitlist-message" style="display:none"></div>
+    </div>
   </div>
   <footer>&copy; 2025 Sir Realtor. All rights reserved.</footer>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('waitlist-btn')
+      var input = document.getElementById('waitlist-email')
+      var msg = document.getElementById('waitlist-message')
+
+      function showMessage(text, type) {
+        msg.textContent = text
+        msg.className = 'waitlist-message ' + type
+        msg.style.display = 'block'
+      }
+
+      btn.addEventListener('click', function () {
+        var email = input.value.trim()
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showMessage('Please enter a valid email address.', 'error')
+          return
+        }
+        btn.disabled = true
+        btn.textContent = 'Joining…'
+        msg.style.display = 'none'
+
+        fetch('https://api.sirrealtor.com/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email }),
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error('error')
+            showMessage("You're on the list! We'll be in touch.", 'success')
+            input.value = ''
+            btn.textContent = 'Done!'
+          })
+          .catch(function () {
+            showMessage('Something went wrong. Please try again.', 'error')
+            btn.disabled = false
+            btn.textContent = 'Join'
+          })
+      })
+
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') btn.click()
+      })
+    })()
+  </script>
 </body>
 </html>

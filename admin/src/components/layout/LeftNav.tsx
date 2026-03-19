@@ -6,6 +6,7 @@ const NAV_WIDTH = 240
 const navItems = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Users', to: '/users' },
+  { label: 'Waitlist', to: '/waitlist' },
   { label: 'Documents', to: '/documents' },
   { label: 'Viewings', to: '/viewings' },
   { label: 'Offers', to: '/offers' },

@@ -640,6 +640,48 @@ async function recordSellerDecision(event: APIGatewayProxyEventV2): Promise<APIG
   return json(200, { ok: true })
 }
 
+async function joinWaitlist(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const { email } = JSON.parse(event.body ?? '{}') as { email?: string }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return json(400, { error: 'Valid email required' })
+  }
+  const existing = await dynamo.send(new GetItemCommand({
+    TableName: process.env.WAITLIST_TABLE!,
+    Key: { email: { S: email.toLowerCase() } },
+  }))
+  if (existing.Item) return json(200, { ok: true }) // idempotent
+  await dynamo.send(new PutItemCommand({
+    TableName: process.env.WAITLIST_TABLE!,
+    Item: marshall({ email: email.toLowerCase(), status: 'waitlist', createdAt: new Date().toISOString() }),
+  }))
+  return json(200, { ok: true })
+}
+
+async function checkWaitlist(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const email = event.queryStringParameters?.email
+  if (!email) return json(400, { error: 'email required' })
+  const result = await dynamo.send(new GetItemCommand({
+    TableName: process.env.WAITLIST_TABLE!,
+    Key: { email: { S: email.toLowerCase() } },
+  }))
+  if (!result.Item) return json(404, { error: 'Not found' })
+  const item = unmarshall(result.Item) as { email: string; status: string; createdAt: string }
+  return json(200, { status: item.status })
+}
+
+async function acceptWaitlist(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const { email } = JSON.parse(event.body ?? '{}') as { email?: string }
+  if (!email) return json(400, { error: 'email required' })
+  await dynamo.send(new UpdateItemCommand({
+    TableName: process.env.WAITLIST_TABLE!,
+    Key: { email: { S: email.toLowerCase() } },
+    UpdateExpression: 'SET #s = :s',
+    ExpressionAttributeNames: { '#s': 'status' },
+    ExpressionAttributeValues: { ':s': { S: 'accepted_beta' } },
+  }))
+  return json(200, { ok: true })
+}
+
 async function cancelViewing(userId: string, event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const { viewingId } = JSON.parse(event.body ?? '{}') as { viewingId?: string }
   if (!viewingId) return json(400, { error: 'Missing viewingId' })
@@ -704,6 +746,9 @@ export async function handler(
 
   try {
     // Unauthenticated routes
+    if (path === '/waitlist' && event.requestContext.http.method === 'POST') return joinWaitlist(event)
+    if (path === '/waitlist/check' && event.requestContext.http.method === 'GET') return checkWaitlist(event)
+    if (path === '/waitlist/accept' && event.requestContext.http.method === 'POST') return acceptWaitlist(event)
     if (path === '/viewing-response') return recordViewingResponse(event)
     if (path === '/seller-response' && event.requestContext.http.method === 'GET') return getSellerResponseInfo(event)
     if (path === '/seller-response/upload-url') return getSellerUploadUrl(event)

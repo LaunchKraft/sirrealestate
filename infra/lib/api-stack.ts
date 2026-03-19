@@ -33,6 +33,8 @@ export class ApiStack extends Stack {
         allowOrigins: [
           `https://${props.appDomain}`,
           'http://localhost:5173',
+          'https://sirrealtor.com',
+          'https://www.sirrealtor.com',
         ],
         allowMethods: [apigwv2.CorsHttpMethod.ANY],
         allowHeaders: ['Content-Type', 'Authorization'],

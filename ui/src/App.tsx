@@ -14,6 +14,8 @@ import ListingsPage from '@/pages/ListingsPage'
 import ViewingsPage from '@/pages/ViewingsPage'
 import LoginPage from '@/pages/LoginPage'
 import SignUpPage from '@/pages/SignUpPage'
+import BetaWaitlistPage from '@/pages/BetaWaitlistPage'
+import BetaSignUpPage from '@/pages/BetaSignUpPage'
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
 import ViewingResponsePage from '@/pages/ViewingResponsePage'
 import SellerResponsePage from '@/pages/SellerResponsePage'
@@ -26,7 +28,9 @@ export default function App() {
       <RouteTracker />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/sign-up" element={<SignUpPage />} />
+        <Route path="/sign-up" element={<BetaWaitlistPage />} />
+        <Route path="/sign-up-internal" element={<SignUpPage />} />
+        <Route path="/beta-signup" element={<BetaSignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/viewing-response" element={<ViewingResponsePage />} />
         <Route path="/seller-response" element={<SellerResponsePage />} />

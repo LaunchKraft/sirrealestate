@@ -29,6 +29,7 @@ interface ChatServiceStackProps extends StackProps {
   documentsTable: dynamodb.Table
   offersTable: dynamodb.Table
   favoritesTable: dynamodb.Table
+  waitlistTable: dynamodb.Table
 }
 
 export class ChatServiceStack extends Stack {
@@ -44,6 +45,7 @@ export class ChatServiceStack extends Stack {
       DOCUMENT_BUCKET_NAME: props.documentBucket.bucketName,
       OFFERS_TABLE: props.offersTable.tableName,
       FAVORITES_TABLE: props.favoritesTable.tableName,
+      WAITLIST_TABLE: props.waitlistTable.tableName,
     }
 
     const bundlingOptions = { externalModules: [] as string[] }
@@ -140,6 +142,7 @@ export class ChatServiceStack extends Stack {
     props.documentBucket.grantReadWrite(dataLambda)
     props.offersTable.grantReadWriteData(dataLambda)
     props.favoritesTable.grantReadWriteData(dataLambda)
+    props.waitlistTable.grantReadWriteData(dataLambda)
 
     // SES permission for buyer notification on agent response
     dataLambda.addToRolePolicy(
@@ -319,6 +322,25 @@ export class ChatServiceStack extends Stack {
       routeKey: apigwv2.HttpRouteKey.with('/favorites/toggle', apigwv2.HttpMethod.POST),
       integration: dataIntegration,
       authorizer: cognitoAuthorizer,
+    })
+
+    // Unauthenticated — waitlist routes
+    new apigwv2.HttpRoute(this, 'WaitlistPostRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/waitlist', apigwv2.HttpMethod.POST),
+      integration: dataIntegration,
+    })
+
+    new apigwv2.HttpRoute(this, 'WaitlistCheckRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/waitlist/check', apigwv2.HttpMethod.GET),
+      integration: dataIntegration,
+    })
+
+    new apigwv2.HttpRoute(this, 'WaitlistAcceptRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/waitlist/accept', apigwv2.HttpMethod.POST),
+      integration: dataIntegration,
     })
 
     new CfnOutput(this, 'AnthropicModelId', {
