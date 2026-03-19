@@ -18,6 +18,7 @@ import { AdminAuthStack } from '../lib/admin-auth-stack'
 import { AdminApiStack } from '../lib/admin-api-stack'
 import { AdminServiceStack } from '../lib/admin-service-stack'
 import { WwwStack } from '../lib/www-stack'
+import { AnalyticsPipelineStack } from '../lib/analytics-pipeline-stack'
 import * as acm from 'aws-cdk-lib/aws-certificatemanager'
 
 const app = new App()
@@ -113,6 +114,18 @@ chatServiceStack.addDependency(authStack)
 chatServiceStack.addDependency(dataStack)
 chatServiceStack.addDependency(sesStack)
 chatServiceStack.addDependency(searchWorkerStack)
+
+// ---------------------------------------------------------------------------
+// Analytics pipeline — DynamoDB Streams → Firehose → S3 → Glue/Athena
+// ---------------------------------------------------------------------------
+const analyticsPipelineStack = new AnalyticsPipelineStack(app, 'SirRealtor-Analytics', {
+  env: prodEnv,
+  viewingsTable: dataStack.viewingsTable,
+  offersTable: dataStack.offersTable,
+  userProfileTable: dataStack.userProfileTable,
+  searchResultsTable: dataStack.searchResultsTable,
+})
+analyticsPipelineStack.addDependency(dataStack)
 
 // ---------------------------------------------------------------------------
 // Admin console — separate stacks, separate Cognito pool, separate API GW

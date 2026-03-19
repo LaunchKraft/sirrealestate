@@ -4,6 +4,7 @@ import type { SearchResult } from '@/hooks/useSearchResults'
 import { streetViewUrl } from '@/lib/streetview'
 import FavoriteButton from '@/components/favorites/FavoriteButton'
 import { stats } from '@/services/api'
+import { trackEvent } from '@/lib/analytics'
 
 interface ListingDetailDialogProps {
   result: SearchResult | null
@@ -118,6 +119,7 @@ export default function ListingDetailDialog({ result, open, onClose }: ListingDe
                 : l.listingUrl?.includes('realtor') ? 'realtor'
                 : 'other'
               stats.recordListingClick(result.listingId, platform, result.profileId).catch(() => {})
+              trackEvent('listing_site_click', { platform, listing_id: result.listingId })
             }}
           >
             View Listing

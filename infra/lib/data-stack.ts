@@ -23,6 +23,7 @@ export class DataStack extends Stack {
       partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.RETAIN,
+      stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
     })
     this.userProfileTable.addGlobalSecondaryIndex({
       indexName: 'email-index',
@@ -36,6 +37,7 @@ export class DataStack extends Stack {
       sortKey: { name: 'profileIdListingId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.RETAIN,
+      stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
     })
     this.searchResultsTable.addGlobalSecondaryIndex({
       indexName: 'userId-matchedAt-index',
@@ -58,6 +60,7 @@ export class DataStack extends Stack {
       sortKey: { name: 'viewingId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.RETAIN,
+      stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
     })
     this.viewingsTable.addGlobalSecondaryIndex({
       indexName: 'userId-status-index',
@@ -95,6 +98,7 @@ export class DataStack extends Stack {
       sortKey: { name: 'offerId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.RETAIN,
+      stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
     })
     // Enables unauthenticated lookup by seller's agent response token
     this.offersTable.addGlobalSecondaryIndex({
