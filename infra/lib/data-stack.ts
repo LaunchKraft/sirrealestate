@@ -13,6 +13,7 @@ export class DataStack extends Stack {
   readonly offersTable: dynamodb.Table
   readonly favoritesTable: dynamodb.Table
   readonly waitlistTable: dynamodb.Table
+  readonly listingClicksTable: dynamodb.Table
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props)
@@ -123,6 +124,14 @@ export class DataStack extends Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     })
 
+    this.listingClicksTable = new dynamodb.Table(this, 'ListingClicksTable', {
+      tableName: 'SirRealtor-ListingClicks',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'clickedAt', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: RemovalPolicy.RETAIN,
+    })
+
     new CfnOutput(this, 'UserProfileTableName', { value: this.userProfileTable.tableName })
     new CfnOutput(this, 'SearchResultsTableName', { value: this.searchResultsTable.tableName })
     new CfnOutput(this, 'NotificationsTableName', { value: this.notificationsTable.tableName })
@@ -132,5 +141,6 @@ export class DataStack extends Stack {
     new CfnOutput(this, 'OffersTableName', { value: this.offersTable.tableName })
     new CfnOutput(this, 'FavoritesTableName', { value: this.favoritesTable.tableName })
     new CfnOutput(this, 'WaitlistTableName', { value: this.waitlistTable.tableName })
+    new CfnOutput(this, 'ListingClicksTableName', { value: this.listingClicksTable.tableName })
   }
 }

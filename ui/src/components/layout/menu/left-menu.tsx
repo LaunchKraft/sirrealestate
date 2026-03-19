@@ -10,6 +10,7 @@ import NiCalendar from '@/icons/nexture/ni-calendar'
 import NiListSquare from '@/icons/nexture/ni-list-square'
 import NiDuplicate from '@/icons/nexture/ni-duplicate'
 import NiHome from '@/icons/nexture/ni-home'
+import NiBarChart from '@/icons/nexture/ni-bar-chart'
 import NiChevronRightSmall from '@/icons/nexture/ni-chevron-right-small'
 import keysImage from '@/assets/keys.png'
 import ProfilePanel from '@/components/sidebar/ProfilePanel'
@@ -138,6 +139,24 @@ export default function LeftMenu() {
           <NiMessage size="medium" />
           <Typography variant="body2" component="span" className="font-medium">
             Chat
+          </Typography>
+        </NavLink>
+
+        {/* Dashboard nav link */}
+        <NavLink
+          to="/dashboard"
+          className={({ isActive }) =>
+            cn(
+              'flex flex-row items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+              isActive
+                ? 'bg-primary/10 text-primary'
+                : 'text-text-secondary hover:bg-grey-50 hover:text-text-primary',
+            )
+          }
+        >
+          <NiBarChart size="medium" />
+          <Typography variant="body2" component="span" className="font-medium">
+            Dashboard
           </Typography>
         </NavLink>
 

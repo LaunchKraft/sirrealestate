@@ -1,4 +1,4 @@
-// ci trigger 7
+// ci trigger 8
 import * as path from 'path'
 import { Duration, Stack, CfnOutput, type StackProps } from 'aws-cdk-lib'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
@@ -30,6 +30,7 @@ interface ChatServiceStackProps extends StackProps {
   offersTable: dynamodb.Table
   favoritesTable: dynamodb.Table
   waitlistTable: dynamodb.Table
+  listingClicksTable: dynamodb.Table
 }
 
 export class ChatServiceStack extends Stack {
@@ -46,6 +47,7 @@ export class ChatServiceStack extends Stack {
       OFFERS_TABLE: props.offersTable.tableName,
       FAVORITES_TABLE: props.favoritesTable.tableName,
       WAITLIST_TABLE: props.waitlistTable.tableName,
+      LISTING_CLICKS_TABLE: props.listingClicksTable.tableName,
     }
 
     const bundlingOptions = { externalModules: [] as string[] }
@@ -103,6 +105,7 @@ export class ChatServiceStack extends Stack {
     props.documentsTable.grantReadWriteData(chatLambda)
     props.offersTable.grantReadWriteData(chatLambda)
     props.waitlistTable.grantReadWriteData(chatLambda)
+    props.listingClicksTable.grantReadWriteData(chatLambda)
 
     // SES permission for schedule_viewing tool
     chatLambda.addToRolePolicy(
@@ -144,6 +147,7 @@ export class ChatServiceStack extends Stack {
     props.offersTable.grantReadWriteData(dataLambda)
     props.favoritesTable.grantReadWriteData(dataLambda)
     props.waitlistTable.grantReadWriteData(dataLambda)
+    props.listingClicksTable.grantReadWriteData(dataLambda)
 
     // SES permission for buyer notification on agent response
     dataLambda.addToRolePolicy(
@@ -336,6 +340,20 @@ export class ChatServiceStack extends Stack {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/waitlist/check', apigwv2.HttpMethod.GET),
       integration: dataIntegration,
+    })
+
+    new apigwv2.HttpRoute(this, 'StatsRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/stats', apigwv2.HttpMethod.GET),
+      integration: dataIntegration,
+      authorizer: cognitoAuthorizer,
+    })
+
+    new apigwv2.HttpRoute(this, 'StatsListingClickRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/stats/listing-click', apigwv2.HttpMethod.POST),
+      integration: dataIntegration,
+      authorizer: cognitoAuthorizer,
     })
 
     new apigwv2.HttpRoute(this, 'WaitlistAcceptRoute', {

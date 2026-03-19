@@ -21,6 +21,7 @@ import ViewingResponsePage from '@/pages/ViewingResponsePage'
 import SellerResponsePage from '@/pages/SellerResponsePage'
 import NotificationsPage from '@/pages/NotificationsPage'
 import FavoritesPage from '@/pages/FavoritesPage'
+import DashboardPage from '@/pages/DashboardPage'
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/viewings" element={<ViewingsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/chat" replace />} />
       </Routes>

@@ -3,6 +3,7 @@ import { useFloatingChat } from '@/components/chat/floating-chat-context'
 import type { SearchResult } from '@/hooks/useSearchResults'
 import { streetViewUrl } from '@/lib/streetview'
 import FavoriteButton from '@/components/favorites/FavoriteButton'
+import { stats } from '@/services/api'
 
 interface ListingDetailDialogProps {
   result: SearchResult | null
@@ -111,6 +112,13 @@ export default function ListingDetailDialog({ result, open, onClose }: ListingDe
             href={l.listingUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              const platform = l.listingUrl?.includes('zillow') ? 'zillow'
+                : l.listingUrl?.includes('redfin') ? 'redfin'
+                : l.listingUrl?.includes('realtor') ? 'realtor'
+                : 'other'
+              stats.recordListingClick(result.listingId, platform, result.profileId).catch(() => {})
+            }}
           >
             View Listing
           </Button>

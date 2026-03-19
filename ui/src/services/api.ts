@@ -83,6 +83,28 @@ export const notifications = {
   list: () => api.get<{ notifications: unknown[] }>('/notifications'),
 }
 
+export interface StatsResponse {
+  stats: {
+    searchResultsCount: number
+    favoritesCount: number
+    viewingsCount: { total: number; accepted: number }
+    offersCount: { total: number; accepted: number }
+  }
+  charts: {
+    searchResultsOverTime: Record<string, unknown>[]
+    searchProfileIds: string[]
+    viewingsChartData: { month: string; requested: number; confirmed: number }[]
+    offersChartData: { month: string; submitted: number; accepted: number }[]
+    listingClicksChartData: { date: string; zillow: number; redfin: number; realtor: number }[]
+  }
+}
+
+export const stats = {
+  get: () => api.get<StatsResponse>('/stats'),
+  recordListingClick: (listingId: string, platform: string, profileId: string) =>
+    api.post<{ ok: boolean }>('/stats/listing-click', { listingId, platform, profileId }),
+}
+
 export const documents = {
   list: () => api.get<{ documents: UserDocument[] }>('/documents'),
   getUploadUrl: (fileName: string, contentType: string) =>

@@ -682,6 +682,136 @@ async function acceptWaitlist(event: APIGatewayProxyEventV2): Promise<APIGateway
   return json(200, { ok: true })
 }
 
+async function getStats(userId: string): Promise<APIGatewayProxyResultV2> {
+  const [searchResultsRes, favoritesRes, viewingsRes, offersRes, clicksRes] = await Promise.all([
+    dynamo.send(new QueryCommand({
+      TableName: process.env.SEARCH_RESULTS_TABLE!,
+      IndexName: 'userId-matchedAt-index',
+      KeyConditionExpression: 'userId = :uid',
+      ExpressionAttributeValues: { ':uid': { S: userId } },
+    })),
+    dynamo.send(new QueryCommand({
+      TableName: process.env.FAVORITES_TABLE!,
+      KeyConditionExpression: 'userId = :uid',
+      ExpressionAttributeValues: { ':uid': { S: userId } },
+    })),
+    dynamo.send(new QueryCommand({
+      TableName: process.env.VIEWINGS_TABLE!,
+      KeyConditionExpression: 'userId = :uid',
+      ExpressionAttributeValues: { ':uid': { S: userId } },
+    })),
+    dynamo.send(new QueryCommand({
+      TableName: process.env.OFFERS_TABLE!,
+      KeyConditionExpression: 'userId = :uid',
+      ExpressionAttributeValues: { ':uid': { S: userId } },
+    })),
+    dynamo.send(new QueryCommand({
+      TableName: process.env.LISTING_CLICKS_TABLE!,
+      KeyConditionExpression: 'userId = :uid',
+      ExpressionAttributeValues: { ':uid': { S: userId } },
+      ScanIndexForward: false,
+      Limit: 500,
+    })),
+  ])
+
+  const searchResultItems = (searchResultsRes.Items ?? []).map((i) => unmarshall(i) as { profileId: string; matchedAt: string })
+  const viewingItems = (viewingsRes.Items ?? []).map((i) => unmarshall(i) as { status: string; requestedAt: string })
+  const offerItems = (offersRes.Items ?? []).map((i) => unmarshall(i) as { status: string; createdAt?: string; updatedAt?: string })
+  const clickItems = (clicksRes.Items ?? []).map((i) => unmarshall(i) as { clickedAt: string; platform: string; profileId?: string })
+
+  // Stat cards
+  const searchResultsCount = searchResultItems.length
+  const favoritesCount = (favoritesRes.Items ?? []).length
+  const viewingsAccepted = viewingItems.filter((v) => v.status === 'confirmed').length
+  const offersAccepted = offerItems.filter((o) => o.status === 'accepted').length
+
+  // Search results over time — group by week + profileId
+  const srByWeek: Record<string, Record<string, number>> = {}
+  for (const r of searchResultItems) {
+    const week = r.matchedAt.slice(0, 10) // use day as granularity
+    if (!srByWeek[week]) srByWeek[week] = {}
+    srByWeek[week][r.profileId] = (srByWeek[week][r.profileId] ?? 0) + 1
+  }
+  const profileIds = [...new Set(searchResultItems.map((r) => r.profileId))]
+  const srDates = Object.keys(srByWeek).sort()
+  const searchResultsOverTime = srDates.map((date) => {
+    const entry: Record<string, unknown> = { date }
+    for (const pid of profileIds) entry[pid] = srByWeek[date][pid] ?? 0
+    return entry
+  })
+
+  // Viewings by month
+  const viewingsByMonth: Record<string, { requested: number; confirmed: number }> = {}
+  for (const v of viewingItems) {
+    const month = v.requestedAt.slice(0, 7)
+    if (!viewingsByMonth[month]) viewingsByMonth[month] = { requested: 0, confirmed: 0 }
+    viewingsByMonth[month].requested++
+    if (v.status === 'confirmed') viewingsByMonth[month].confirmed++
+  }
+  const viewingsChartData = Object.entries(viewingsByMonth)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, counts]) => ({ month, ...counts }))
+
+  // Offers by month
+  const offersByMonth: Record<string, { submitted: number; accepted: number }> = {}
+  for (const o of offerItems) {
+    const ts = o.createdAt ?? o.updatedAt ?? ''
+    const month = ts.slice(0, 7)
+    if (!month) continue
+    if (!offersByMonth[month]) offersByMonth[month] = { submitted: 0, accepted: 0 }
+    offersByMonth[month].submitted++
+    if (o.status === 'accepted') offersByMonth[month].accepted++
+  }
+  const offersChartData = Object.entries(offersByMonth)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, counts]) => ({ month, ...counts }))
+
+  // Listing clicks by day + platform
+  const clicksByDay: Record<string, { zillow: number; redfin: number; realtor: number }> = {}
+  for (const c of clickItems) {
+    const day = c.clickedAt.slice(0, 10)
+    if (!clicksByDay[day]) clicksByDay[day] = { zillow: 0, redfin: 0, realtor: 0 }
+    const p = c.platform?.toLowerCase() as 'zillow' | 'redfin' | 'realtor'
+    if (p === 'zillow' || p === 'redfin' || p === 'realtor') clicksByDay[day][p]++
+  }
+  const listingClicksChartData = Object.entries(clicksByDay)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, counts]) => ({ date, ...counts }))
+
+  return json(200, {
+    stats: {
+      searchResultsCount,
+      favoritesCount,
+      viewingsCount: { total: viewingItems.length, accepted: viewingsAccepted },
+      offersCount: { total: offerItems.length, accepted: offersAccepted },
+    },
+    charts: {
+      searchResultsOverTime,
+      searchProfileIds: profileIds,
+      viewingsChartData,
+      offersChartData,
+      listingClicksChartData,
+    },
+  })
+}
+
+async function recordListingClick(userId: string, event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const { listingId, platform, profileId } = JSON.parse(event.body ?? '{}') as {
+    listingId?: string
+    platform?: string
+    profileId?: string
+  }
+  if (!listingId || !platform) return json(400, { error: 'Missing listingId or platform' })
+
+  const clickedAt = new Date().toISOString()
+  await dynamo.send(new PutItemCommand({
+    TableName: process.env.LISTING_CLICKS_TABLE!,
+    Item: marshall({ userId, clickedAt, listingId, platform: platform.toLowerCase(), profileId: profileId ?? '' }),
+  }))
+
+  return json(200, { ok: true })
+}
+
 async function cancelViewing(userId: string, event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const { viewingId } = JSON.parse(event.body ?? '{}') as { viewingId?: string }
   if (!viewingId) return json(400, { error: 'Missing viewingId' })
@@ -775,6 +905,8 @@ export async function handler(
     const claimGivenName = claims?.['given_name'] as string | undefined
     const claimFamilyName = claims?.['family_name'] as string | undefined
 
+    if (path === '/stats' && event.requestContext.http.method === 'GET') return getStats(userId)
+    if (path === '/stats/listing-click' && event.requestContext.http.method === 'POST') return recordListingClick(userId, event)
     if (path === '/notifications') return getNotifications(userId)
     if (path === '/viewings/cancel' && event.requestContext.http.method === 'POST') return cancelViewing(userId, event)
     if (path === '/offers' && event.requestContext.http.method === 'GET') return getOffers(userId)
