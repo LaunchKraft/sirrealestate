@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material'
-import NiArrowOutUp from '@/icons/nexture/ni-arrow-out-up'
-import NiShare from '@/icons/nexture/ni-share'
+import { Upload, Share2 } from 'lucide-react'
 import { documents as documentsApi } from '@/services/api'
 import { useDocumentUpload } from '@/hooks/useDocumentUpload'
 import type { UserDocument } from '@/hooks/useDocuments'
@@ -77,7 +76,7 @@ export default function DocumentPanel({ documentList }: DocumentPanelProps) {
               onClick={() => fileInputRef.current?.click()}
               className={isUploading ? 'animate-pulse' : ''}
             >
-              <NiArrowOutUp size="small" />
+              <Upload size={16} />
             </IconButton>
           </span>
         </Tooltip>
@@ -119,7 +118,7 @@ export default function DocumentPanel({ documentList }: DocumentPanelProps) {
             </Box>
             <Tooltip title="Download" arrow>
               <IconButton size="small" onClick={() => handleDownload(doc)}>
-                <NiShare size="small" />
+                <Share2 size={16} />
               </IconButton>
             </Tooltip>
           </Box>

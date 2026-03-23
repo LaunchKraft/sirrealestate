@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   CardContent,
-  FormControl,
   TextareaAutosize,
   Tooltip,
   Typography,
@@ -18,9 +17,7 @@ import ChatMessage from '@/pages/chat/chat-message'
 import { Conversation } from '@/pages/chat/types'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
 import { useUserProfile } from '@/hooks/useUserProfile'
-import NiArrowOutUp from '@/icons/nexture/ni-arrow-out-up'
-import NiMicrophone from '@/icons/nexture/ni-microphone'
-import NiSendRight from '@/icons/nexture/ni-send-right'
+import { Upload, Mic, Send } from 'lucide-react'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { cn } from '@/lib/utils'
 import { trackEvent } from '@/lib/analytics'
@@ -297,65 +294,63 @@ export default function ChatPage() {
           className="hidden"
           onChange={handleFileChange}
         />
-        <Card>
-          <CardContent className="flex flex-col gap-4 p-2!">
-            <FormControl className="MuiTextField-root relative mb-0 w-full">
-              <TextareaAutosize
-                minRows={2}
-                maxRows={3}
-                className="MuiInputBase-root MuiInput-root outlined autosize bg-background-paper! w-full resize-none pe-28! outline-none!"
-                placeholder="Let's find your new home…"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
+        <Box className="flex items-center rounded-full border border-gray-200 bg-white px-5 py-2 shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+          <TextareaAutosize
+            minRows={1}
+            maxRows={3}
+            className="w-full flex-1 resize-none bg-transparent text-[0.95rem] outline-none!"
+            placeholder="Let's find your new home…"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+          />
+          <Box className="flex flex-shrink-0 flex-row items-center gap-1">
+            <Tooltip
+              title={!isSupported ? 'Voice input not supported in this browser' : isListening ? 'Stop recording' : 'Voice'}
+              arrow
+              enterDelay={isListening ? 0 : 2000}
+            >
+              <span className="hidden sm:inline-flex">
+                <Button
+                  className={cn('icon-only', isListening && 'animate-pulse')}
+                  size="medium"
+                  color={isListening ? 'error' : 'grey'}
+                  variant="text"
+                  disabled={!isSupported || isLoading}
+                  onClick={isListening ? stopListening : startListening}
+                  startIcon={<Mic size={20} />}
+                  sx={{ minWidth: 50 }}
+                />
+              </span>
+            </Tooltip>
+            <Tooltip title={isUploading ? 'Uploading…' : 'Attach document'} arrow enterDelay={isUploading ? 0 : 2000}>
+              <span>
+                <Button
+                  className={cn('icon-only', isUploading && 'animate-pulse')}
+                  size="medium"
+                  color="grey"
+                  variant="text"
+                  disabled={isLoading || isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  startIcon={<Upload size={20} />}
+                  sx={{ minWidth: 50 }}
+                />
+              </span>
+            </Tooltip>
+            <Tooltip title="Send" arrow enterDelay={2000}>
+              <Button
+                className="icon-only"
+                color="primary"
+                variant="contained"
+                onClick={() => sendMessage(inputValue)}
                 disabled={isLoading}
+                startIcon={<Send size={18} />}
+                sx={{ minWidth: 50, width: 50, height: 50, borderRadius: '50%', padding: 0 }}
               />
-              <Box className="absolute bottom-0 end-0 flex flex-row gap-1 sm:top-0 sm:bottom-auto">
-                <Tooltip
-                  title={!isSupported ? 'Voice input not supported in this browser' : isListening ? 'Stop recording' : 'Voice'}
-                  arrow
-                  enterDelay={isListening ? 0 : 2000}
-                >
-                  <span className="hidden sm:inline-flex">
-                    <Button
-                      className={cn('icon-only', isListening && 'animate-pulse')}
-                      size="medium"
-                      color={isListening ? 'error' : 'grey'}
-                      variant="text"
-                      disabled={!isSupported || isLoading}
-                      onClick={isListening ? stopListening : startListening}
-                      startIcon={<NiMicrophone size="medium" />}
-                    />
-                  </span>
-                </Tooltip>
-                <Tooltip title={isUploading ? 'Uploading…' : 'Attach document'} arrow enterDelay={isUploading ? 0 : 2000}>
-                  <span>
-                    <Button
-                      className={cn('icon-only', isUploading && 'animate-pulse')}
-                      size="medium"
-                      color="grey"
-                      variant="text"
-                      disabled={isLoading || isUploading}
-                      onClick={() => fileInputRef.current?.click()}
-                      startIcon={<NiArrowOutUp size="medium" />}
-                    />
-                  </span>
-                </Tooltip>
-                <Tooltip title="Send" arrow enterDelay={2000}>
-                  <Button
-                    className="icon-only"
-                    size="medium"
-                    color="primary"
-                    variant="contained"
-                    onClick={() => sendMessage(inputValue)}
-                    disabled={isLoading || !inputValue.trim()}
-                    startIcon={<NiSendRight size="medium" />}
-                  />
-                </Tooltip>
-              </Box>
-            </FormControl>
-          </CardContent>
-        </Card>
+            </Tooltip>
+          </Box>
+        </Box>
       </Box>
     </Box>
   )

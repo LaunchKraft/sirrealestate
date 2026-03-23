@@ -11,7 +11,7 @@ import { useViewings, type Viewing, type ViewingStatus } from '@/hooks/useViewin
 import { useUserProfile, type AvailabilityWindow } from '@/hooks/useUserProfile'
 import { profile as profileApi, viewings as viewingsApi } from '@/services/api'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
-import NiClose from '@/icons/nexture/ni-chevron-right-small'
+import { ChevronRight } from 'lucide-react'
 
 const locales = { 'en-US': enUS }
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales })
@@ -108,7 +108,7 @@ function AvailabilityDialog({ window: w, allWindows, onClose, onSaved }: Availab
       <DialogTitle>
         Availability Window
         <IconButton onClick={onClose} size="small" sx={{ position: 'absolute', right: 12, top: 12 }}>
-          <NiClose size="small" className="rotate-90" />
+          <ChevronRight size={16} className="rotate-90" />
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
@@ -287,7 +287,7 @@ function ViewingDialog({ viewing, listingPreference, onClose, onCancelled }: Vie
           />
         </Box>
         <IconButton onClick={onClose} size="small" sx={{ position: 'absolute', right: 12, top: 12 }}>
-          <NiClose size="small" className="rotate-90" />
+          <ChevronRight size={16} className="rotate-90" />
         </IconButton>
       </DialogTitle>
 

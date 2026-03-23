@@ -22,6 +22,7 @@ import SellerResponsePage from '@/pages/SellerResponsePage'
 import NotificationsPage from '@/pages/NotificationsPage'
 import FavoritesPage from '@/pages/FavoritesPage'
 import DashboardPage from '@/pages/DashboardPage'
+import IconGalleryPage from '@/pages/IconGalleryPage'
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/viewing-response" element={<ViewingResponsePage />} />
         <Route path="/seller-response" element={<SellerResponsePage />} />
+        <Route path="/icons" element={<IconGalleryPage />} />
         <Route
           element={
             <AuthGuard>

@@ -19,8 +19,7 @@ import {
 } from '@mui/material'
 import MuiLayerOverride from '@/theme/mui-layer-override'
 import logo from '@/assets/logo.png'
-import NiEyeClose from '@/icons/nexture/ni-eye-close'
-import NiEyeOpen from '@/icons/nexture/ni-eye-open'
+import { EyeOff, Eye } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate()
@@ -142,9 +141,9 @@ export default function ForgotPasswordPage() {
                           onMouseDown={(e) => e.preventDefault()}
                         >
                           {showPassword ? (
-                            <NiEyeClose size="medium" className="text-text-secondary" />
+                            <EyeOff size={20} className="text-text-secondary" />
                           ) : (
-                            <NiEyeOpen size="medium" className="text-text-secondary" />
+                            <Eye size={20} className="text-text-secondary" />
                           )}
                         </IconButton>
                       </InputAdornment>

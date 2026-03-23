@@ -3,15 +3,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { Box, Divider, Typography } from '@mui/material'
 import { useLayoutContext } from '@/components/layout/layout-context'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
-import NiMessage from '@/icons/nexture/ni-message'
-import NiUser from '@/icons/nexture/ni-user'
-import NiSearch from '@/icons/nexture/ni-search'
-import NiCalendar from '@/icons/nexture/ni-calendar'
-import NiListSquare from '@/icons/nexture/ni-list-square'
-import NiDuplicate from '@/icons/nexture/ni-duplicate'
-import NiHome from '@/icons/nexture/ni-home'
-import NiBarChart from '@/icons/nexture/ni-bar-chart'
-import NiChevronRightSmall from '@/icons/nexture/ni-chevron-right-small'
+import { MessageSquare, User, Search, Calendar, LayoutList, Copy, Home, BarChart2, ChevronRight } from 'lucide-react'
 import keysImage from '@/assets/keys.png'
 import ProfilePanel from '@/components/sidebar/ProfilePanel'
 import SearchProfileCard from '@/components/sidebar/SearchProfileCard'
@@ -50,8 +42,8 @@ function SidebarSection({
         className="flex w-full cursor-pointer items-center gap-1 rounded-xl px-2 py-2 text-left hover:bg-grey-50"
         style={{ background: 'none', border: 'none' }}
       >
-        <NiChevronRightSmall
-          size="small"
+        <ChevronRight
+          size={16}
           className={cn('shrink-0 text-primary transition-transform', open && 'rotate-90')}
         />
         <Box className="flex items-center gap-2">
@@ -79,7 +71,7 @@ function ViewingChatButton({ prompt }: { prompt: string }) {
       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', lineHeight: 0 }}
       title="Chat about viewings"
     >
-      <NiMessage size={12} />
+      <MessageSquare size={12} />
     </button>
   )
 }
@@ -136,7 +128,7 @@ export default function LeftMenu() {
             )
           }
         >
-          <NiMessage size="medium" />
+          <MessageSquare size={20} />
           <Typography variant="body2" component="span" className="font-medium">
             Chat
           </Typography>
@@ -154,7 +146,7 @@ export default function LeftMenu() {
             )
           }
         >
-          <NiBarChart size="medium" />
+          <BarChart2 size={20} />
           <Typography variant="body2" component="span" className="font-medium">
             Dashboard
           </Typography>
@@ -164,7 +156,7 @@ export default function LeftMenu() {
 
         <SidebarSection
           title="My Profile"
-          icon={<NiUser size="small" />}
+          icon={<User size={16} />}
           defaultOpen
         >
           <ProfilePanel profile={profile} />
@@ -172,14 +164,14 @@ export default function LeftMenu() {
 
         <SidebarSection
           title="My Documents"
-          icon={<NiListSquare size="small" />}
+          icon={<LayoutList size={16} />}
         >
           <DocumentPanel documentList={documents} />
         </SidebarSection>
 
         <SidebarSection
           title="My Searches"
-          icon={<NiSearch size="small" />}
+          icon={<Search size={16} />}
           contentClassName="flex flex-col gap-1 px-2 pb-3 pt-0"
         >
           {favorites.length > 0 && <FavoritesCard />}
@@ -204,7 +196,7 @@ export default function LeftMenu() {
 
         <SidebarSection
           title="My Viewings"
-          icon={<NiCalendar size="small" />}
+          icon={<Calendar size={16} />}
           contentClassName="flex flex-col gap-1.5 px-2 pb-3 pt-0"
         >
           {viewings.length === 0 ? (
@@ -247,7 +239,7 @@ export default function LeftMenu() {
 
         <SidebarSection
           title="My Offers"
-          icon={<NiDuplicate size="small" />}
+          icon={<Copy size={16} />}
           contentClassName="flex flex-col gap-1.5 px-2 pb-3 pt-0"
         >
           {offers.length === 0 ? (
@@ -264,7 +256,7 @@ export default function LeftMenu() {
 
         <SidebarSection
           title="My Home"
-          icon={<NiHome size="small" />}
+          icon={<Home size={16} />}
         >
           <Typography variant="caption" className="text-text-secondary px-2.5 italic">
             Coming soon

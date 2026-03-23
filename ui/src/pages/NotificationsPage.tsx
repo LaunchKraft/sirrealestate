@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   Box, Chip, Collapse, Divider, IconButton, Typography,
 } from '@mui/material'
-import NiChevronRightSmall from '@/icons/nexture/ni-chevron-right-small'
+import { ChevronRight } from 'lucide-react'
 import { useNotifications, type AppNotification } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
 
@@ -75,8 +75,8 @@ function NotificationItem({ n }: { n: AppNotification }) {
           </Typography>
           {n.body && (
             <IconButton size="small" sx={{ p: 0.25 }}>
-              <NiChevronRightSmall
-                size="small"
+              <ChevronRight
+                size={16}
                 className={cn('transition-transform', expanded && 'rotate-90')}
               />
             </IconButton>

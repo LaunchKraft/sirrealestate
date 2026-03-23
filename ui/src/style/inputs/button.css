@@ -10,6 +10,9 @@
     }
     &.icon-only {
       @apply min-w-0;
+      .MuiButton-startIcon {
+        @apply m-0!;
+      }
     }
 
     &.MuiButton-loadingPositionCenter {

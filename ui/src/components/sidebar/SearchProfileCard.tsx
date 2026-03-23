@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Typography } from '@mui/material'
 import { Link } from 'react-router-dom'
-import NiChevronRightSmall from '@/icons/nexture/ni-chevron-right-small'
-import NiClose from '@/icons/nexture/ni-close'
+import { ChevronRight, X } from 'lucide-react'
 import ListingMatchCard from './ListingMatchCard'
 import type { SearchProfile } from '@/hooks/useUserProfile'
 import type { SearchResult } from '@/hooks/useSearchResults'
@@ -61,8 +60,8 @@ export default function SearchProfileCard({ profile, results, onDeleted }: Searc
           className="flex w-full cursor-pointer items-center gap-1 rounded-xl px-2 py-1.5 text-left"
           sx={{ background: 'none', border: 'none', p: 0 }}
         >
-          <NiChevronRightSmall
-            size="small"
+          <ChevronRight
+            size={16}
             className={cn('accordion-rotate shrink-0 transition-transform', expanded && 'rotate-90')}
           />
           <Box className="flex min-w-0 flex-1 items-center justify-between gap-2 px-1 py-1.5">
@@ -82,7 +81,7 @@ export default function SearchProfileCard({ profile, results, onDeleted }: Searc
                 onClick={(e) => { e.stopPropagation(); setConfirmOpen(true) }}
                 title="Remove this search"
               >
-                <NiClose size={12} />
+                <X size={12} />
               </IconButton>
             </Box>
           </Box>

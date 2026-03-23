@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Box, Chip, Typography } from '@mui/material'
 import { Link } from 'react-router-dom'
-import NiChevronRightSmall from '@/icons/nexture/ni-chevron-right-small'
+import { ChevronRight } from 'lucide-react'
 import ListingMatchCard from './ListingMatchCard'
 import { useFavoritesContext } from '@/components/favorites/FavoritesContext'
 import { cn } from '@/lib/utils'
@@ -31,8 +31,8 @@ export default function FavoritesCard() {
         className="flex w-full cursor-pointer items-center gap-1 rounded-xl px-2 py-1.5 text-left"
         sx={{ background: 'none', border: 'none', p: 0 }}
       >
-        <NiChevronRightSmall
-          size="small"
+        <ChevronRight
+          size={16}
           className={cn('accordion-rotate shrink-0 transition-transform', expanded && 'rotate-90')}
         />
         <Box className="flex min-w-0 flex-1 items-center justify-between gap-2 px-1 py-1.5">

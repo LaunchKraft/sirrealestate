@@ -4,8 +4,7 @@ import { Avatar, Box, Button, Chip, Divider, Menu, MenuItem, Popover, Typography
 import { useLayoutContext } from '@/components/layout/layout-context'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
 import logo from '@/assets/logo.png'
-import NiMenuSplit from '@/icons/nexture/ni-menu-split'
-import NiBell from '@/icons/nexture/ni-bell'
+import { Menu as MenuIcon, Bell } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserProfile } from '@/hooks/useUserProfile'
 import { useNotifications, type AppNotification } from '@/hooks/useNotifications'
@@ -89,7 +88,7 @@ export default function Header() {
           color="text-primary"
           className="icon-only hover-icon-shrink hover:bg-grey-25 me-2"
           onClick={toggleSidebar}
-          startIcon={<NiMenuSplit size={24} />}
+          startIcon={<MenuIcon size={24} />}
         />
 
         {/* Logo */}
@@ -110,7 +109,7 @@ export default function Header() {
           className="icon-only"
           sx={{ mr: 1.5 }}
           onClick={handleBellClick}
-          startIcon={<NiBell size="medium" />}
+          startIcon={<Bell size={20} />}
         />
 
         {/* Notifications popover */}

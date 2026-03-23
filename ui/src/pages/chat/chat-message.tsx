@@ -2,10 +2,7 @@ import { Conversation } from './types'
 import DsMarkdown from 'ds-markdown'
 import { useState } from 'react'
 import { Avatar, Box, Button, Card, CardContent, Fade, Typography } from '@mui/material'
-import NiDuplicate from '@/icons/nexture/ni-duplicate'
-import NiLike from '@/icons/nexture/ni-like'
-import NiShare from '@/icons/nexture/ni-share'
-import NiUnlike from '@/icons/nexture/ni-unlike'
+import { Copy, ThumbsUp, Share2, ThumbsDown } from 'lucide-react'
 import logo from '@/assets/logo.png'
 import { cn } from '@/lib/utils'
 
@@ -74,21 +71,21 @@ export default function ChatMessage({
                     size="tiny"
                     color="grey"
                     variant="pastel"
-                    startIcon={<NiLike size="small" />}
+                    startIcon={<ThumbsUp size={16} />}
                     className="[.active]:text-primary [.active]:bg-grey-25 hover:text-primary icon-only min-w-0 md:min-w-16"
                   />
                   <Button
                     size="tiny"
                     color="grey"
                     variant="pastel"
-                    startIcon={<NiUnlike size="small" />}
+                    startIcon={<ThumbsDown size={16} />}
                     className="[.active]:text-primary [.active]:bg-grey-25 hover:text-primary icon-only min-w-0 md:min-w-16"
                   />
                   <Button
                     size="tiny"
                     color="grey"
                     variant="pastel"
-                    startIcon={<NiDuplicate size="small" />}
+                    startIcon={<Copy size={16} />}
                     className="[.active]:text-primary [.active]:bg-grey-25 hover:text-primary icon-only min-w-0 md:min-w-16"
                     onClick={() => navigator.clipboard.writeText(conversation.message)}
                   />
@@ -96,7 +93,7 @@ export default function ChatMessage({
                     size="tiny"
                     color="grey"
                     variant="pastel"
-                    startIcon={<NiShare size="small" />}
+                    startIcon={<Share2 size={16} />}
                     className="[.active]:text-primary [.active]:bg-grey-25 hover:text-primary icon-only min-w-0 md:min-w-16"
                   />
                 </Box>

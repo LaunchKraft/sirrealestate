@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Avatar, Box, Chip, Divider, Typography } from '@mui/material'
-import NiMessage from '@/icons/nexture/ni-message'
+import { MessageSquare } from 'lucide-react'
 import type { UserProfile } from '@/hooks/useUserProfile'
 
 interface ProfilePanelProps {
@@ -30,7 +30,7 @@ function ChatEditButton({ prompt }: { prompt: string }) {
       className="shrink-0 text-text-secondary opacity-40 hover:opacity-100 hover:text-primary transition-opacity rounded p-0.5"
       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', lineHeight: 0 }}
     >
-      <NiMessage size={12} />
+      <MessageSquare size={12} />
     </button>
   )
 }

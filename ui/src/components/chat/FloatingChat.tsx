@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Fab,
-  FormControl,
   IconButton,
   TextareaAutosize,
   Tooltip,
@@ -19,11 +18,7 @@ import { useFloatingChat } from './floating-chat-context'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
 import { useUserProfile } from '@/hooks/useUserProfile'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
-import NiMessage from '@/icons/nexture/ni-message'
-import NiMicrophone from '@/icons/nexture/ni-microphone'
-import NiSendRight from '@/icons/nexture/ni-send-right'
-import NiCrossSquare from '@/icons/nexture/ni-cross-square'
-import NiExpand from '@/icons/nexture/ni-expand'
+import { MessageSquare, Mic, Send, X, Maximize2 } from 'lucide-react'
 import logo from '@/assets/logo.png'
 import { cn } from '@/lib/utils'
 import type { ConversationMessage } from '@/types'
@@ -168,10 +163,10 @@ export default function FloatingChat() {
             </Box>
             <Box className="flex items-center">
               <IconButton size="small" onClick={handleExpand} className="text-white">
-                <NiExpand size="small" />
+                <Maximize2 size={16} />
               </IconButton>
               <IconButton size="small" onClick={closeChat} className="text-white">
-                <NiCrossSquare size="small" />
+                <X size={16} />
               </IconButton>
             </Box>
           </Box>
@@ -238,18 +233,18 @@ export default function FloatingChat() {
 
           {/* Input */}
           <CardContent className="border-t p-2!">
-            <FormControl className="relative w-full">
+            <Box className="flex items-center rounded-full border border-gray-200 bg-white px-4 py-1.5 transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
               <TextareaAutosize
                 minRows={1}
                 maxRows={3}
-                className="MuiInputBase-root MuiInput-root outlined autosize bg-background-paper! w-full resize-none pe-16! text-sm outline-none!"
+                className="w-full flex-1 resize-none bg-transparent text-[0.80rem] outline-none!"
                 placeholder="Ask something…"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isLoading}
               />
-              <Box className="absolute right-0 bottom-0 flex flex-row gap-0.5">
+              <Box className="flex flex-shrink-0 flex-row items-center gap-0.5">
                 <Tooltip
                   title={!isSupported ? 'Voice not supported' : isListening ? 'Stop' : 'Voice'}
                   arrow
@@ -263,23 +258,24 @@ export default function FloatingChat() {
                       variant="text"
                       disabled={!isSupported || isLoading}
                       onClick={isListening ? stopListening : startListening}
-                      startIcon={<NiMicrophone size="small" />}
+                      startIcon={<Mic size={16} />}
+                      sx={{ minWidth: 50 }}
                     />
                   </span>
                 </Tooltip>
                 <Tooltip title="Send" arrow enterDelay={2000}>
                   <Button
                     className="icon-only"
-                    size="small"
                     color="primary"
                     variant="contained"
                     onClick={() => sendMessage(inputValue)}
-                    disabled={isLoading || !inputValue.trim()}
-                    startIcon={<NiSendRight size="small" />}
+                    disabled={isLoading}
+                    startIcon={<Send size={14} />}
+                    sx={{ minWidth: 36, width: 36, height: 36, borderRadius: '50%', padding: 0 }}
                   />
                 </Tooltip>
               </Box>
-            </FormControl>
+            </Box>
           </CardContent>
         </Card>
       )}
@@ -292,7 +288,7 @@ export default function FloatingChat() {
         sx={{ zIndex: 1400, position: 'fixed', bottom: 24, right: 16 }}
         aria-label="Open chat"
       >
-        <NiMessage size="medium" />
+        <MessageSquare size={20} />
       </Fab>
     </>
   )
