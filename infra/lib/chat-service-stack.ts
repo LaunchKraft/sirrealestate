@@ -78,7 +78,7 @@ export class ChatServiceStack extends Stack {
         ...tableEnv,
         DROPBOX_SIGN_API_KEY_SECRET_ARN: dropboxSignApiKeySecret.secretArn,
       },
-      bundling: bundlingOptions,
+      bundling: { externalModules: [], nodeModules: ['pdfkit'] },
     })
 
     dropboxSignApiKeySecret.grantRead(documentGeneratorLambda)
