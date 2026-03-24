@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { Box, Divider, Typography } from '@mui/material'
 import { useLayoutContext } from '@/components/layout/layout-context'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
-import { MessageSquare, User, Search, Calendar, LayoutList, Copy, Home, BarChart2, ChevronRight } from 'lucide-react'
+import { MessageSquare, User, Search, Eye, FileText, DollarSign, Home, BarChart2, ChevronDown } from 'lucide-react'
 import keysImage from '@/assets/keys.png'
 import ProfilePanel from '@/components/sidebar/ProfilePanel'
 import SearchProfileCard from '@/components/sidebar/SearchProfileCard'
@@ -39,19 +39,17 @@ function SidebarSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full cursor-pointer items-center gap-1 rounded-xl px-2 py-2 text-left hover:bg-grey-50"
+        className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-2 py-2 text-left hover:bg-grey-50"
         style={{ background: 'none', border: 'none' }}
       >
-        <ChevronRight
+        <span className="text-primary">{icon}</span>
+        <Typography variant="h6" className="text-primary flex-1 text-sm font-semibold">
+          {title}
+        </Typography>
+        <ChevronDown
           size={16}
-          className={cn('shrink-0 text-primary transition-transform', open && 'rotate-90')}
+          className={cn('shrink-0 text-primary transition-transform', open && 'rotate-180')}
         />
-        <Box className="flex items-center gap-2">
-          <span className="text-primary">{icon}</span>
-          <Typography variant="h6" className="text-primary text-sm font-semibold">
-            {title}
-          </Typography>
-        </Box>
       </button>
       {open && (
         <div className={contentClassName ?? 'px-2 pb-3 pt-0'}>
@@ -164,7 +162,7 @@ export default function LeftMenu() {
 
         <SidebarSection
           title="My Documents"
-          icon={<LayoutList size={16} />}
+          icon={<FileText size={16} />}
         >
           <DocumentPanel documentList={documents} />
         </SidebarSection>
@@ -196,7 +194,7 @@ export default function LeftMenu() {
 
         <SidebarSection
           title="My Viewings"
-          icon={<Calendar size={16} />}
+          icon={<Eye size={16} />}
           contentClassName="flex flex-col gap-1.5 px-2 pb-3 pt-0"
         >
           {viewings.length === 0 ? (
@@ -239,7 +237,7 @@ export default function LeftMenu() {
 
         <SidebarSection
           title="My Offers"
-          icon={<Copy size={16} />}
+          icon={<DollarSign size={16} />}
           contentClassName="flex flex-col gap-1.5 px-2 pb-3 pt-0"
         >
           {offers.length === 0 ? (

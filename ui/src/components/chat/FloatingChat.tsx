@@ -270,9 +270,10 @@ export default function FloatingChat() {
                     variant="contained"
                     onClick={() => sendMessage(inputValue)}
                     disabled={isLoading}
-                    startIcon={<Send size={14} />}
                     sx={{ minWidth: 36, width: 36, height: 36, borderRadius: '50%', padding: 0 }}
-                  />
+                  >
+                    <Send size={14} />
+                  </Button>
                 </Tooltip>
               </Box>
             </Box>

@@ -4,9 +4,9 @@
 
 @layer base {
   .theme-blue {
-    --primary: 191 100% 46%;
-    --primary-light: 191 100% 56%;
-    --primary-dark: 191 100% 36%;
+    --primary: 221 83% 53%;
+    --primary-light: 218 91% 63%;
+    --primary-dark: 224 76% 43%;
 
     --secondary: 207 85% 42%;
     --secondary-light: 207 85% 52%;
@@ -39,9 +39,9 @@
     color-scheme: light;
   }
   .theme-blue.dark {
-    --primary: 191 100% 46%;
-    --primary-light: 191 100% 56%;
-    --primary-dark: 191 100% 36%;
+    --primary: 221 83% 53%;
+    --primary-light: 218 91% 63%;
+    --primary-dark: 224 76% 43%;
 
     --secondary: 207 85% 42%;
     --secondary-light: 207 85% 52%;

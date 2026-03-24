@@ -294,7 +294,7 @@ export default function ChatPage() {
           className="hidden"
           onChange={handleFileChange}
         />
-        <Box className="flex items-center rounded-full border border-gray-200 bg-white px-5 py-2 shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+        <Box className="flex items-center rounded-full border border-gray-200 bg-white px-5 py-1 shadow-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
           <TextareaAutosize
             minRows={1}
             maxRows={3}
@@ -345,9 +345,10 @@ export default function ChatPage() {
                 variant="contained"
                 onClick={() => sendMessage(inputValue)}
                 disabled={isLoading}
-                startIcon={<Send size={18} />}
-                sx={{ minWidth: 50, width: 50, height: 50, borderRadius: '50%', padding: 0 }}
-              />
+                sx={{ minWidth: 38, width: 38, height: 38, borderRadius: '50%', padding: 0 }}
+              >
+                <Send size={18} />
+              </Button>
             </Tooltip>
           </Box>
         </Box>
