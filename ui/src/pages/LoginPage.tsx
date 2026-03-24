@@ -139,7 +139,8 @@ export default function LoginPage() {
               </Button>
             </Box>
 
-            <GoogleSignInButton label="Sign in with Google" />
+            {/* TODO: re-enable Google sign-in after beta */}
+            {/* <GoogleSignInButton label="Sign in with Google" /> */}
 
             <Divider className="text-text-secondary my-0 text-sm" />
 
