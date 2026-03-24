@@ -162,10 +162,10 @@ export default function FloatingChat() {
               </Typography>
             </Box>
             <Box className="flex items-center">
-              <IconButton size="small" onClick={handleExpand} className="text-white">
+              <IconButton size="small" onClick={handleExpand} sx={{ color: 'white' }}>
                 <Maximize2 size={16} />
               </IconButton>
-              <IconButton size="small" onClick={closeChat} className="text-white">
+              <IconButton size="small" onClick={closeChat} sx={{ color: 'white' }}>
                 <X size={16} />
               </IconButton>
             </Box>

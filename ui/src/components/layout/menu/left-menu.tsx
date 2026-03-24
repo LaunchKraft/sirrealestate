@@ -4,7 +4,6 @@ import { Box, Divider, Typography } from '@mui/material'
 import { useLayoutContext } from '@/components/layout/layout-context'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
 import { MessageSquare, User, Search, Eye, FileText, DollarSign, Home, BarChart2, ChevronDown } from 'lucide-react'
-import keysImage from '@/assets/keys.png'
 import ProfilePanel from '@/components/sidebar/ProfilePanel'
 import SearchProfileCard from '@/components/sidebar/SearchProfileCard'
 import FavoritesCard from '@/components/sidebar/FavoritesCard'
@@ -261,15 +260,10 @@ export default function LeftMenu() {
           </Typography>
         </SidebarSection>
 
-        <div className="flex justify-center py-4">
-          <img
-            src={keysImage}
-            alt=""
-            className="w-24 opacity-60"
-            style={{ mixBlendMode: 'multiply' }}
-          />
-        </div>
       </Box>
+      <div className="flex justify-center p-6" style={{ width: `${sidebarWidth}px` }}>
+        <span className="text-6xl">🏠</span>
+      </div>
     </nav>
   )
 }
