@@ -67,6 +67,25 @@ export class ChatServiceStack extends Stack {
       this, 'EarnnestApiKey', 'SirRealtor/EarnnestApiKey',
     )
 
+    // Document Generator Lambda — invoked async by the chat Lambda to avoid
+    // the 30-second API Gateway timeout during PDF generation + Dropbox Sign calls
+    const documentGeneratorLambda = new NodejsFunction(this, 'DocumentGeneratorLambda', {
+      entry: path.join(__dirname, '../../chat-service/src/document-generator.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_22_X,
+      timeout: Duration.seconds(180),
+      environment: {
+        ...tableEnv,
+        DROPBOX_SIGN_API_KEY_SECRET_ARN: dropboxSignApiKeySecret.secretArn,
+      },
+      bundling: bundlingOptions,
+    })
+
+    dropboxSignApiKeySecret.grantRead(documentGeneratorLambda)
+    props.offersTable.grantReadWriteData(documentGeneratorLambda)
+    props.documentsTable.grantReadWriteData(documentGeneratorLambda)
+    props.documentBucket.grantReadWrite(documentGeneratorLambda)
+
     // Chat Lambda
     const chatLambda = new NodejsFunction(this, 'ChatLambda', {
       entry: path.join(__dirname, '../../chat-service/src/handler.ts'),
@@ -81,6 +100,7 @@ export class ChatServiceStack extends Stack {
         AGENT_EMAIL_BCC: 'noreply@sirrealtor.com',
         SES_TEST_RECIPIENT: 'tim@sirrealtor.com',
         SEARCH_WORKER_FUNCTION_NAME: props.searchWorkerLambda.functionName,
+        DOCUMENT_GENERATOR_FUNCTION_NAME: documentGeneratorLambda.functionName,
         ...tableEnv,
       },
       bundling: bundlingOptions,
@@ -96,8 +116,9 @@ export class ChatServiceStack extends Stack {
     props.notificationsTable.grantWriteData(chatLambda)
     props.viewingsTable.grantReadWriteData(chatLambda)
 
-    // Permission to invoke the search worker Lambda
+    // Permission to invoke the search worker and document generator Lambdas
     props.searchWorkerLambda.grantInvoke(chatLambda)
+    documentGeneratorLambda.grantInvoke(chatLambda)
 
     // Grant chat Lambda read/write access to document bucket and documents table
     // (generate_purchase_agreement writes the PDF to S3 and creates a Documents record)

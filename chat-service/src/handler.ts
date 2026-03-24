@@ -1,8 +1,9 @@
-// ci trigger 5
+// ci trigger 6
 import Anthropic from '@anthropic-ai/sdk'
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb'
 import { marshall } from '@aws-sdk/util-dynamodb'
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda'
 import type { MessageParam, ToolUseBlock } from '@anthropic-ai/sdk/resources/messages'
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda'
 import * as GetUserProfile from './tools/get-user-profile'
@@ -87,6 +88,7 @@ const SYSTEM_PROMPT =
 
 const secretsManager = new SecretsManagerClient({})
 const dynamo = new DynamoDBClient({})
+const lambdaClient = new LambdaClient({})
 let anthropic: Anthropic | null = null
 
 async function getClient(): Promise<Anthropic> {
@@ -154,11 +156,15 @@ async function executeTool(
     case 'get_offers':
       return GetOffers.execute(userId, input as Parameters<typeof GetOffers.execute>[1])
     case 'generate_purchase_agreement':
-      return GeneratePurchaseAgreement.execute(userId, input as Parameters<typeof GeneratePurchaseAgreement.execute>[1])
-    case 'generate_earnest_money_agreement':
-      return GenerateEarnestMoneyAgreement.execute(userId, input as Parameters<typeof GenerateEarnestMoneyAgreement.execute>[1])
     case 'generate_agency_disclosure':
-      return GenerateAgencyDisclosure.execute(userId, input as Parameters<typeof GenerateAgencyDisclosure.execute>[1])
+    case 'generate_earnest_money_agreement': {
+      await lambdaClient.send(new InvokeCommand({
+        FunctionName: process.env.DOCUMENT_GENERATOR_FUNCTION_NAME!,
+        InvocationType: 'Event',
+        Payload: JSON.stringify({ toolName: name, userId, input }),
+      }))
+      return { message: 'Document generation has started. You will receive a signing email from Dropbox Sign within the next minute — please check your inbox.' }
+    }
     case 'submit_offer':
       return SubmitOffer.execute(userId, input as Parameters<typeof SubmitOffer.execute>[1], userEmail)
     case 'save_beta_feedback':
