@@ -47,7 +47,7 @@ export class DropboxSignProvider implements SigningProvider {
     form.append('title', request.title)
     form.append('subject', request.subject)
     form.append('message', request.message)
-    form.append('test_mode', '0')
+    form.append('test_mode', '1')
 
     request.signers.forEach((signer, i) => {
       form.append(`signers[${i}][name]`, signer.name)
