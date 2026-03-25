@@ -8,6 +8,7 @@ import SearchProfileCard from '@/components/sidebar/SearchProfileCard'
 import FavoritesCard from '@/components/sidebar/FavoritesCard'
 import ViewingCard from '@/components/sidebar/ViewingCard'
 import OfferCard from '@/components/sidebar/OfferCard'
+import ClosingCard from '@/components/sidebar/ClosingCard'
 import NameMismatchDialog from '@/components/documents/NameMismatchDialog'
 import { useUserProfile } from '@/hooks/useUserProfile'
 import { useSearchResults } from '@/hooks/useSearchResults'
@@ -15,6 +16,7 @@ import { useViewings } from '@/hooks/useViewings'
 import { useDocuments } from '@/hooks/useDocuments'
 import { useDocumentUpload } from '@/hooks/useDocumentUpload'
 import { useOffers } from '@/hooks/useOffers'
+import { useClosings } from '@/hooks/useClosings'
 import { useFavoritesContext } from '@/components/favorites/FavoritesContext'
 import { cn } from '@/lib/utils'
 
@@ -77,12 +79,13 @@ function ViewingChatButton({ prompt }: { prompt: string }) {
 
 export default function LeftMenu() {
   const { sidebarOpen, sidebarWidth } = useLayoutContext()
-  const { registerProfileRefetch, registerSearchResultsRefetch, registerDocumentsRefetch, registerOffersRefetch, registerViewingsRefetch, setNewListingsCount } = useSidebarRefresh()
+  const { registerProfileRefetch, registerSearchResultsRefetch, registerDocumentsRefetch, registerOffersRefetch, registerViewingsRefetch, registerClosingsRefetch, setNewListingsCount } = useSidebarRefresh()
   const { profile, refetch: refetchProfile } = useUserProfile()
   const { results, grouped, refetch: refetchSearchResults } = useSearchResults()
   const { viewings, refetch: refetchViewings } = useViewings()
   const { documents, refetch: refetchDocuments } = useDocuments()
   const { offers, refetch: refetchOffers } = useOffers()
+  const { closings, refetch: refetchClosings } = useClosings()
   const { favorites } = useFavoritesContext()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { upload, isUploading, nameMismatch, clearNameMismatch, updateProfileName } = useDocumentUpload()
@@ -106,6 +109,7 @@ export default function LeftMenu() {
   useEffect(() => registerDocumentsRefetch(refetchDocuments), [registerDocumentsRefetch, refetchDocuments])
   useEffect(() => registerOffersRefetch(refetchOffers), [registerOffersRefetch, refetchOffers])
   useEffect(() => registerViewingsRefetch(refetchViewings), [registerViewingsRefetch, refetchViewings])
+  useEffect(() => registerClosingsRefetch(refetchClosings), [registerClosingsRefetch, refetchClosings])
 
   useEffect(() => {
     setNewListingsCount(results.filter((r) => !r.notified).length)
@@ -118,6 +122,7 @@ export default function LeftMenu() {
     refetchViewings()
     refetchDocuments()
     refetchOffers()
+    refetchClosings()
   }, [sidebarOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -305,10 +310,15 @@ export default function LeftMenu() {
         <SidebarSection
           title="My Home"
           icon={<Home size={16} />}
+          contentClassName="flex flex-col gap-1.5 px-2 pb-3 pt-0"
         >
-          <Typography variant="caption" className="text-text-secondary px-2.5 italic">
-            Coming soon
-          </Typography>
+          {closings.length === 0 ? (
+            <Typography variant="caption" className="text-text-secondary px-2.5 italic">
+              Your active closing will appear here once an offer is accepted.
+            </Typography>
+          ) : (
+            closings.map((c) => <ClosingCard key={c.closingId} closing={c} />)
+          )}
         </SidebarSection>
 
       </Box>

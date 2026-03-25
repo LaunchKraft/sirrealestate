@@ -25,6 +25,7 @@ import DashboardPage from '@/pages/DashboardPage'
 import DocumentsPage from '@/pages/DocumentsPage'
 import IconGalleryPage from '@/pages/IconGalleryPage'
 import OfferDetailPage from '@/pages/offers/OfferDetailPage'
+import ClosingDetailPage from '@/pages/closings/ClosingDetailPage'
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/offers/:offerId" element={<OfferDetailPage />} />
+          <Route path="/closings/:closingId" element={<ClosingDetailPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/chat" replace />} />
       </Routes>
