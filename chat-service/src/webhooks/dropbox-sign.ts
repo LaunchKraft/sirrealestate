@@ -4,7 +4,7 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
-import type { Offer, UserDocument, UserProfile } from '../types'
+import type { Closing, Offer, UserDocument, UserProfile } from '../types'
 import { purchaseAgreementSignedEmail } from '../email-templates'
 
 const dynamo = new DynamoDBClient({})
@@ -33,6 +33,7 @@ interface DropboxSignEvent {
     metadata?: {
       userId?: string
       offerId?: string
+      closingId?: string
       formType?: string
     }
   }
@@ -96,9 +97,73 @@ export async function handleDropboxSignWebhook(rawBody: string): Promise<string>
   const sigReq = payload.signature_request
   if (!sigReq) return 'Hello API Event Received'
 
-  const { userId, offerId, formType } = sigReq.metadata ?? {}
-  if (!userId || !offerId || !formType) {
-    console.error('Dropbox Sign webhook: missing metadata', { userId, offerId, formType })
+  const { userId, offerId, closingId, formType } = sigReq.metadata ?? {}
+  if (!userId || !formType || (!offerId && !closingId)) {
+    console.error('Dropbox Sign webhook: missing metadata', { userId, offerId, closingId, formType })
+    return 'Hello API Event Received'
+  }
+
+  if (closingId) {
+    // Handle closing document signing
+    const closingResult = await dynamo.send(
+      new GetItemCommand({
+        TableName: process.env.CLOSINGS_TABLE!,
+        Key: marshall({ userId, closingId }),
+      }),
+    )
+    if (!closingResult.Item) {
+      console.error('Dropbox Sign webhook: closing not found', { userId, closingId })
+      return 'Hello API Event Received'
+    }
+    const closing = unmarshall(closingResult.Item) as Closing
+    const documentId = closing.documents?.[formType]
+    if (!documentId) {
+      console.error('Dropbox Sign webhook: no documentId for formType on closing', { formType })
+      return 'Hello API Event Received'
+    }
+
+    const docResult = await dynamo.send(
+      new GetItemCommand({
+        TableName: process.env.DOCUMENTS_TABLE!,
+        Key: marshall({ userId, documentId }),
+      }),
+    )
+    if (!docResult.Item) {
+      console.error('Dropbox Sign webhook: document not found', { documentId })
+      return 'Hello API Event Received'
+    }
+    const doc = unmarshall(docResult.Item) as UserDocument
+
+    const signedPdf = await downloadSignedPdf(apiKey, sigReq.signature_request_id)
+    await s3.send(new PutObjectCommand({
+      Bucket: process.env.DOCUMENT_BUCKET_NAME!,
+      Key: doc.s3Key,
+      Body: signedPdf,
+      ContentType: 'application/pdf',
+    }))
+
+    const now = new Date().toISOString()
+    await dynamo.send(new UpdateItemCommand({
+      TableName: process.env.DOCUMENTS_TABLE!,
+      Key: marshall({ userId, documentId }),
+      UpdateExpression: 'SET signedAt = :now',
+      ExpressionAttributeValues: marshall({ ':now': now }),
+    }))
+    await dynamo.send(new UpdateItemCommand({
+      TableName: process.env.CLOSINGS_TABLE!,
+      Key: marshall({ userId, closingId }),
+      UpdateExpression: 'SET signedForms.#ft = :now, updatedAt = :now',
+      ExpressionAttributeNames: { '#ft': formType },
+      ExpressionAttributeValues: marshall({ ':now': now }),
+    }))
+
+    console.log('Dropbox Sign webhook: processed closing document', { userId, closingId, formType })
+    return 'Hello API Event Received'
+  }
+
+  // At this point closingId is absent, so offerId must be present (validated above)
+  if (!offerId) {
+    console.error('Dropbox Sign webhook: missing offerId for offer document')
     return 'Hello API Event Received'
   }
 

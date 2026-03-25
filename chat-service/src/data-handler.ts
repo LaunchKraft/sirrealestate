@@ -881,6 +881,37 @@ async function cancelViewing(userId: string, event: APIGatewayProxyEventV2): Pro
   return json(200, { ok: true })
 }
 
+async function recordMessageFeedback(userId: string, event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const body = JSON.parse(event.body ?? '{}') as {
+    messageId?: string
+    sessionId?: string
+    rating?: 'up' | 'down' | null
+    messageContent?: string
+  }
+  if (!body.messageId) return json(400, { error: 'messageId is required' })
+
+  if (!body.rating) {
+    await dynamo.send(new DeleteItemCommand({
+      TableName: process.env.MESSAGE_FEEDBACK_TABLE!,
+      Key: marshall({ userId, messageId: body.messageId }),
+    }))
+  } else {
+    await dynamo.send(new PutItemCommand({
+      TableName: process.env.MESSAGE_FEEDBACK_TABLE!,
+      Item: marshall({
+        userId,
+        messageId: body.messageId,
+        sessionId: body.sessionId ?? '',
+        rating: body.rating,
+        messageContent: (body.messageContent ?? '').slice(0, 2000),
+        ratedAt: new Date().toISOString(),
+      }, { removeUndefinedValues: true }),
+    }))
+  }
+
+  return json(200, { ok: true })
+}
+
 export async function handler(
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> {
@@ -937,6 +968,7 @@ export async function handler(
     if (path === '/documents/upload-url') return getUploadUrl(userId, event)
     if (path === '/documents' && event.requestContext.http.method === 'POST') return confirmUpload(userId, event)
     if (path === '/documents/download-url') return getDownloadUrl(userId, event)
+    if (path === '/chat/feedback' && event.requestContext.http.method === 'POST') return recordMessageFeedback(userId, event)
     return json(404, { error: 'Not found' })
   } catch (err) {
     console.error('Data handler error', err)

@@ -266,6 +266,7 @@ export default function ChatPage() {
           <ChatMessage
             key={msg.id}
             conversation={msg}
+            sessionId={sessionId}
             onAnimationStart={() => setIsAnimating(true)}
             onAnimationEnd={() => setIsAnimating(false)}
             userInitials={userInitials}

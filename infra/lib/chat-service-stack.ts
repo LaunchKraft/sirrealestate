@@ -11,6 +11,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager'
 import * as iam from 'aws-cdk-lib/aws-iam'
+import * as scheduler from 'aws-cdk-lib/aws-scheduler'
 import type { Construct } from 'constructs'
 
 const ANTHROPIC_MODEL_ID = 'claude-sonnet-4-6'
@@ -32,6 +33,7 @@ interface ChatServiceStackProps extends StackProps {
   waitlistTable: dynamodb.Table
   listingClicksTable: dynamodb.Table
   closingsTable: dynamodb.Table
+  messageFeedbackTable: dynamodb.Table
 }
 
 export class ChatServiceStack extends Stack {
@@ -50,6 +52,7 @@ export class ChatServiceStack extends Stack {
       WAITLIST_TABLE: props.waitlistTable.tableName,
       LISTING_CLICKS_TABLE: props.listingClicksTable.tableName,
       CLOSINGS_TABLE: props.closingsTable.tableName,
+      MESSAGE_FEEDBACK_TABLE: props.messageFeedbackTable.tableName,
     }
 
     const bundlingOptions = { externalModules: [] as string[] }
@@ -85,6 +88,7 @@ export class ChatServiceStack extends Stack {
 
     dropboxSignApiKeySecret.grantRead(documentGeneratorLambda)
     props.offersTable.grantReadWriteData(documentGeneratorLambda)
+    props.closingsTable.grantReadWriteData(documentGeneratorLambda)
     props.documentsTable.grantReadWriteData(documentGeneratorLambda)
     props.documentBucket.grantReadWrite(documentGeneratorLambda)
     // SES permission for submit_offer (emails seller's agent and buyer)
@@ -96,6 +100,45 @@ export class ChatServiceStack extends Stack {
         ],
       }),
     )
+
+    // Closing Reminder Lambda — runs daily to send SES deadline reminders
+    const closingReminderLambda = new NodejsFunction(this, 'ClosingReminderLambda', {
+      entry: path.join(__dirname, '../../chat-service/src/closing-reminder.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_22_X,
+      timeout: Duration.seconds(120),
+      environment: {
+        CLOSINGS_TABLE: props.closingsTable.tableName,
+        USER_PROFILE_TABLE: props.userProfileTable.tableName,
+      },
+      bundling: bundlingOptions,
+    })
+
+    props.closingsTable.grantReadWriteData(closingReminderLambda)
+    props.userProfileTable.grantReadData(closingReminderLambda)
+    closingReminderLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:SendEmail'],
+        resources: [`arn:aws:ses:${this.region}:${this.account}:identity/${props.domainName}`],
+      }),
+    )
+
+    // EventBridge Scheduler for daily closing reminders at 8am UTC
+    const reminderSchedulerRole = new iam.Role(this, 'ClosingReminderSchedulerRole', {
+      assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
+    })
+    closingReminderLambda.grantInvoke(reminderSchedulerRole)
+
+    new scheduler.CfnSchedule(this, 'DailyClosingReminderSchedule', {
+      name: 'SirRealtor-DailyClosingReminder',
+      scheduleExpression: 'cron(0 8 * * ? *)',
+      scheduleExpressionTimezone: 'UTC',
+      flexibleTimeWindow: { mode: 'OFF' },
+      target: {
+        arn: closingReminderLambda.functionArn,
+        roleArn: reminderSchedulerRole.roleArn,
+      },
+    })
 
     // Chat Lambda
     const chatLambda = new NodejsFunction(this, 'ChatLambda', {
@@ -182,6 +225,7 @@ export class ChatServiceStack extends Stack {
     props.waitlistTable.grantReadWriteData(dataLambda)
     props.listingClicksTable.grantReadWriteData(dataLambda)
     props.closingsTable.grantReadWriteData(dataLambda)
+    props.messageFeedbackTable.grantReadWriteData(dataLambda)
 
     // SES permission for buyer notification on agent response
     dataLambda.addToRolePolicy(
@@ -386,6 +430,13 @@ export class ChatServiceStack extends Stack {
     new apigwv2.HttpRoute(this, 'StatsRoute', {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/stats', apigwv2.HttpMethod.GET),
+      integration: dataIntegration,
+      authorizer: cognitoAuthorizer,
+    })
+
+    new apigwv2.HttpRoute(this, 'MessageFeedbackRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/chat/feedback', apigwv2.HttpMethod.POST),
       integration: dataIntegration,
       authorizer: cognitoAuthorizer,
     })

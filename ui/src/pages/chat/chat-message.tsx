@@ -2,15 +2,17 @@ import { Conversation } from './types'
 import DsMarkdown from 'ds-markdown'
 import { useState } from 'react'
 import { Avatar, Box, Button, Card, CardContent, Fade, Typography } from '@mui/material'
-import { Copy, ThumbsUp, Share2, ThumbsDown } from 'lucide-react'
+import { Check, Copy, ThumbsDown, ThumbsUp } from 'lucide-react'
 import logo from '@/assets/logo.png'
 import { cn } from '@/lib/utils'
+import { chatFeedback } from '@/services/api'
 
 type ChatMessageProps = {
   conversation: Conversation
   onAnimationEnd: () => void
   onAnimationStart: () => void
   userInitials: string
+  sessionId?: string
   onSuggestedQuestion?: (q: string) => void
 }
 
@@ -19,9 +21,29 @@ export default function ChatMessage({
   onAnimationEnd,
   onAnimationStart,
   userInitials,
+  sessionId,
   onSuggestedQuestion,
 }: ChatMessageProps) {
   const [isAnimating, setIsAnimating] = useState(true)
+  const [rating, setRating] = useState<'up' | 'down' | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const handleRate = (vote: 'up' | 'down') => {
+    const newRating = rating === vote ? null : vote
+    setRating(newRating)
+    chatFeedback.rate({
+      messageId: conversation.id,
+      sessionId,
+      rating: newRating,
+      messageContent: conversation.message,
+    }).catch(() => {})
+  }
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(conversation.message)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   if (conversation.type === 'AI') {
     return (
@@ -72,29 +94,39 @@ export default function ChatMessage({
                     color="grey"
                     variant="pastel"
                     startIcon={<ThumbsUp size={16} />}
-                    className="[.active]:text-primary [.active]:bg-grey-25 hover:text-primary icon-only min-w-0 md:min-w-16"
+                    disabled={rating === 'down'}
+                    className={cn(
+                      'icon-only min-w-0 md:min-w-16 transition-colors',
+                      rating === 'up'
+                        ? 'text-primary bg-primary/10'
+                        : 'hover:text-primary',
+                    )}
+                    onClick={() => handleRate('up')}
                   />
                   <Button
                     size="tiny"
                     color="grey"
                     variant="pastel"
                     startIcon={<ThumbsDown size={16} />}
-                    className="[.active]:text-primary [.active]:bg-grey-25 hover:text-primary icon-only min-w-0 md:min-w-16"
+                    disabled={rating === 'up'}
+                    className={cn(
+                      'icon-only min-w-0 md:min-w-16 transition-colors',
+                      rating === 'down'
+                        ? 'text-primary bg-primary/10'
+                        : 'hover:text-primary',
+                    )}
+                    onClick={() => handleRate('down')}
                   />
                   <Button
                     size="tiny"
                     color="grey"
                     variant="pastel"
-                    startIcon={<Copy size={16} />}
-                    className="[.active]:text-primary [.active]:bg-grey-25 hover:text-primary icon-only min-w-0 md:min-w-16"
-                    onClick={() => navigator.clipboard.writeText(conversation.message)}
-                  />
-                  <Button
-                    size="tiny"
-                    color="grey"
-                    variant="pastel"
-                    startIcon={<Share2 size={16} />}
-                    className="[.active]:text-primary [.active]:bg-grey-25 hover:text-primary icon-only min-w-0 md:min-w-16"
+                    startIcon={copied ? <Check size={16} /> : <Copy size={16} />}
+                    className={cn(
+                      'icon-only min-w-0 md:min-w-16 transition-colors',
+                      copied ? 'text-green-600' : 'hover:text-primary',
+                    )}
+                    onClick={handleCopy}
                   />
                 </Box>
               </Fade>

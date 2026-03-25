@@ -109,6 +109,7 @@ const chatServiceStack = new ChatServiceStack(app, 'SirRealtor-Chat', {
   waitlistTable: dataStack.waitlistTable,
   listingClicksTable: dataStack.listingClicksTable,
   closingsTable: dataStack.closingsTable,
+  messageFeedbackTable: dataStack.messageFeedbackTable,
 })
 chatServiceStack.addDependency(apiStack)
 chatServiceStack.addDependency(authStack)

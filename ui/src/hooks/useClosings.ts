@@ -29,6 +29,9 @@ export interface Closing {
   titleContactEmail?: string
   escrowNumber?: string
   notes?: string
+  documents?: Record<string, string>
+  signingRequests?: Record<string, string>
+  signedForms?: Record<string, string>
   createdAt: string
   updatedAt: string
 }

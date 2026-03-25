@@ -50,6 +50,11 @@ export const chat = {
   send: (req: ChatRequest) => api.post<ChatResponse>('/chat', req),
 }
 
+export const chatFeedback = {
+  rate: (body: { messageId: string; sessionId?: string; rating: 'up' | 'down' | null; messageContent: string }) =>
+    api.post<{ ok: boolean }>('/chat/feedback', body),
+}
+
 export const profile = {
   get: () => api.get<UserProfile>('/profile'),
   patch: (body: { firstName?: string; lastName?: string; availability?: AvailabilityWindow[] }) =>

@@ -289,6 +289,14 @@ export interface Closing {
   titleContactEmail?: string
   escrowNumber?: string
   notes?: string
+  /** docType → documentId (S3 + Documents table) */
+  documents?: Record<string, string>
+  /** docType → Dropbox Sign signatureRequestId */
+  signingRequests?: Record<string, string>
+  /** docType → ISO timestamp when fully signed */
+  signedForms?: Record<string, string>
+  /** reminderKey → ISO timestamp when reminder was sent. Key format: "{deadlineField}_{days}d" */
+  remindersSent?: Record<string, string>
   createdAt: string
   updatedAt: string
 }

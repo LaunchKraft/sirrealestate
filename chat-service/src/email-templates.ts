@@ -367,6 +367,33 @@ export function viewingFeedbackRequestEmail(
   return { subject, html }
 }
 
+export function closingDeadlineReminderEmail(
+  listingAddress: string,
+  deadlineLabel: string,
+  daysUntil: number,
+  deadlineDate: string,
+  actionHint: string,
+): { subject: string; html: string } {
+  const subject = `Reminder: ${deadlineLabel} deadline in ${daysUntil} day${daysUntil === 1 ? '' : 's'} — ${listingAddress}`
+  const html = `
+<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+  <h2 style="color:#00BFEB">⏰ Closing Deadline Reminder</h2>
+  <p>Your <strong>${deadlineLabel}</strong> deadline is <strong>in ${daysUntil} day${daysUntil === 1 ? '' : 's'}</strong> (${deadlineDate}).</p>
+  <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0;background:#f9fafb">
+    <p style="margin:0 0 8px"><strong>Property:</strong> ${listingAddress}</p>
+    <p style="margin:0"><strong>What to do:</strong> ${actionHint}</p>
+  </div>
+  <a href="https://app.sirrealtor.com/chat" style="background:#00BFEB;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:8px">
+    Open Sir Realtor →
+  </a>
+  <p style="color:#6b7280;font-size:12px;margin-top:24px">You're receiving this because you have an active closing tracked in Sir Realtor.</p>
+</body>
+</html>`
+  return { subject, html }
+}
+
 export function viewingCancellationToAgentEmail(
   viewing: Viewing,
   buyerName: string,

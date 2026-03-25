@@ -1,4 +1,4 @@
-// ci trigger 7
+// ci trigger 8
 import Anthropic from '@anthropic-ai/sdk'
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb'
 import { marshall } from '@aws-sdk/util-dynamodb'
@@ -28,6 +28,8 @@ import * as SaveBetaFeedback from './tools/save-beta-feedback'
 import * as CreateClosing from './tools/create-closing'
 import * as GetClosings from './tools/get-closings'
 import * as UpdateClosingMilestone from './tools/update-closing-milestone'
+import * as GenerateInspectionObjection from './tools/generate-inspection-objection'
+import * as GenerateInspectionResolution from './tools/generate-inspection-resolution'
 import type { ConversationMessage } from './types'
 
 const SYSTEM_PROMPT =
@@ -90,6 +92,9 @@ const SYSTEM_PROMPT =
   'clear to close, etc. — call update_closing_milestone to record each one. ' +
   'You can also update title company, escrow number, and deadlines via update_closing_milestone. ' +
   'Guide the user through the next pending milestone one step at a time. ' +
+  'During the inspection phase, offer to generate the Inspection Objection form by calling generate_inspection_objection when the user has completed their inspection and wants to formally object to items. ' +
+  'After the Inspection Objection is signed, help the user and seller reach a resolution, then call generate_inspection_resolution to document the agreed remedies or buyer waiver. ' +
+  'Always call update_closing_milestone after generating these forms: inspection_objection_sent after objection, inspection_resolved after resolution. ' +
   'LOCATION: If the user asks to find properties "in my area", "near me", or any location-relative phrase, ' +
   'first ask: "Do you mind if I request your device\'s location?" ' +
   'Only call request_location after the user explicitly agrees. ' +
@@ -135,6 +140,8 @@ const TOOLS: Anthropic.Tool[] = [
   CreateClosing.definition,
   GetClosings.definition,
   UpdateClosingMilestone.definition,
+  GenerateInspectionObjection.definition,
+  GenerateInspectionResolution.definition,
 ] as Anthropic.Tool[]
 
 async function executeTool(
@@ -196,6 +203,15 @@ async function executeTool(
       return GetClosings.execute(userId)
     case 'update_closing_milestone':
       return UpdateClosingMilestone.execute(userId, input as Parameters<typeof UpdateClosingMilestone.execute>[1])
+    case 'generate_inspection_objection':
+    case 'generate_inspection_resolution': {
+      await lambdaClient.send(new InvokeCommand({
+        FunctionName: process.env.DOCUMENT_GENERATOR_FUNCTION_NAME!,
+        InvocationType: 'Event',
+        Payload: JSON.stringify({ toolName: name, userId, input }),
+      }))
+      return { message: 'Document generation has started. You will receive a signing email from Dropbox Sign within the next minute — please check your inbox.' }
+    }
     default:
       return { error: `Unknown tool: ${name}` }
   }
