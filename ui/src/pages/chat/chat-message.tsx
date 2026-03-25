@@ -93,7 +93,7 @@ export default function ChatMessage({
                     size="tiny"
                     color="grey"
                     variant="pastel"
-                    startIcon={<ThumbsUp size={16} fill={rating === 'up' ? 'currentColor' : 'none'} />}
+                    startIcon={<ThumbsUp size={16} fill={rating === 'up' ? 'hsl(var(--primary))' : 'none'} />}
                     disabled={rating === 'down'}
                     className={cn(
                       'icon-only min-w-0 md:min-w-16 transition-colors',
@@ -107,7 +107,7 @@ export default function ChatMessage({
                     size="tiny"
                     color="grey"
                     variant="pastel"
-                    startIcon={<ThumbsDown size={16} fill={rating === 'down' ? 'currentColor' : 'none'} />}
+                    startIcon={<ThumbsDown size={16} fill={rating === 'down' ? 'hsl(var(--primary))' : 'none'} />}
                     disabled={rating === 'up'}
                     className={cn(
                       'icon-only min-w-0 md:min-w-16 transition-colors',
