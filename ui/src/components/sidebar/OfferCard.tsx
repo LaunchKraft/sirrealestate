@@ -1,4 +1,5 @@
 import { Box, Chip, Tooltip, Typography } from '@mui/material'
+import { NavLink } from 'react-router-dom'
 import type { Offer, OfferStatus } from '@/hooks/useOffers'
 
 const STATUS_LABEL: Record<OfferStatus, string> = {
@@ -57,7 +58,16 @@ export default function OfferCard({ offer }: { offer: Offer }) {
   const hasDocActivity = paStatus !== 'none' || emdStatus !== 'none' || adStatus !== 'none' || offer.earnestMoneyPaidAt
 
   return (
-    <Box className="ms-7 flex flex-col gap-1.5 rounded-lg border border-grey-100 bg-background px-3 py-2">
+    <NavLink
+      to={`/offers/${offer.offerId}`}
+      className={({ isActive }) =>
+        `ms-7 flex flex-col gap-1.5 rounded-lg border px-3 py-2 transition-colors no-underline ${
+          isActive
+            ? 'border-primary/30 bg-primary/5'
+            : 'border-grey-100 bg-background hover:border-grey-200 hover:bg-grey-50'
+        }`
+      }
+    >
       {/* Address + status */}
       <Box className="flex items-start justify-between gap-2">
         <Tooltip title={offer.listingAddress} arrow>
@@ -103,6 +113,6 @@ export default function OfferCard({ offer }: { offer: Offer }) {
           )}
         </Box>
       )}
-    </Box>
+    </NavLink>
   )
 }

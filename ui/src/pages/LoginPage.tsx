@@ -21,7 +21,6 @@ import MuiLayerOverride from '@/theme/mui-layer-override'
 import logo from '@/assets/logo.png'
 import { EyeOff, Eye } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 import { trackEvent } from '@/lib/analytics'
 
 export default function LoginPage() {
