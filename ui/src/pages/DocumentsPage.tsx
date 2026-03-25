@@ -185,9 +185,27 @@ export default function DocumentsPage() {
   const selectedDoc = documents.find((d) => d.documentId === selectedId) ?? null
 
   return (
-    <Box className="flex h-full min-h-0 gap-6 p-6">
+    <Box className="flex h-full min-h-0 flex-col gap-6 p-6 md:flex-row">
+      {/* Right: PDF preview — rendered first so it appears on top in mobile stacked layout */}
+      <Box className="flex w-full flex-col gap-4 md:w-1/2">
+        <Typography variant="h5" className="font-semibold text-text-primary">
+          Preview
+        </Typography>
+
+        {selectedDoc ? (
+          <PdfPreview key={selectedDoc.documentId} doc={selectedDoc} />
+        ) : (
+          <Box className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-grey-100 bg-background-paper py-20 text-center">
+            <Folder size={44} className="text-text-disabled" />
+            <Typography variant="body2" className="text-text-secondary italic">
+              Select a document to preview
+            </Typography>
+          </Box>
+        )}
+      </Box>
+
       {/* Left: document list */}
-      <Box className="flex w-1/2 flex-col gap-4 overflow-y-auto">
+      <Box className="flex w-full flex-col gap-4 overflow-y-auto md:w-1/2">
         <Typography variant="h5" className="font-semibold text-text-primary">
           Documents
         </Typography>
@@ -273,24 +291,6 @@ export default function DocumentsPage() {
               </Box>
             )
           })
-        )}
-      </Box>
-
-      {/* Right: PDF preview */}
-      <Box className="flex w-1/2 flex-col gap-4">
-        <Typography variant="h5" className="font-semibold text-text-primary">
-          Preview
-        </Typography>
-
-        {selectedDoc ? (
-          <PdfPreview key={selectedDoc.documentId} doc={selectedDoc} />
-        ) : (
-          <Box className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-grey-100 bg-background-paper py-20 text-center">
-            <Folder size={44} className="text-text-disabled" />
-            <Typography variant="body2" className="text-text-secondary italic">
-              Select a document to preview
-            </Typography>
-          </Box>
         )}
       </Box>
     </Box>
