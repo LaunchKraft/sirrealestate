@@ -271,6 +271,8 @@ export interface ClosingDeadlines {
   loanConditionsDeadline?: string
   newLoanAvailabilityDeadline?: string
   closingDate?: string
+  inspectionPeriodDeadline?: string   // AZ: 10-day inspection period
+  binsrResponseDeadline?: string      // AZ: seller has 5 days to respond to BINSR
 }
 
 export interface Closing {

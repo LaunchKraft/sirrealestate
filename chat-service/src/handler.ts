@@ -31,6 +31,8 @@ import * as UpdateClosingMilestone from './tools/update-closing-milestone'
 import * as GenerateInspectionObjection from './tools/generate-inspection-objection'
 import * as GenerateInspectionResolution from './tools/generate-inspection-resolution'
 import * as GenerateTestPreApproval from './tools/generate-test-pre-approval'
+import * as GenerateAzRpc from './tools/generate-az-rpc'
+import * as GenerateAzBinsr from './tools/generate-az-binsr'
 import type { ConversationMessage } from './types'
 
 const SYSTEM_PROMPT =
@@ -71,6 +73,10 @@ const SYSTEM_PROMPT =
   'Once the offer status is "ready", offer to generate the purchase agreement by calling generate_purchase_agreement. ' +
   'Explain that this will create a PDF and send it to the buyer(s) via Dropbox Sign for e-signature. ' +
   'Only call generate_purchase_agreement after the user explicitly confirms they want to proceed. ' +
+  'ARIZONA OFFERS: ' +
+  'Use the AAR Residential Purchase Contract. Generate with generate_az_rpc. ' +
+  'If the property has an HOA, an HOA Addendum must also be signed (track with hoa_addendum in signedForms). ' +
+  'Earnest money deadline is 24-48 hours after acceptance — remind the buyer promptly after offer is accepted. ' +
   'After the purchase agreement is signed, offer to generate the earnest money deposit agreement by calling ' +
   'generate_earnest_money_agreement. Ask the buyer for the deposit due date and escrow holder name if not yet known. ' +
   'In Colorado, an agency disclosure (brokerage relationship disclosure) must be signed before an offer is submitted. ' +
@@ -96,6 +102,12 @@ const SYSTEM_PROMPT =
   'During the inspection phase, offer to generate the Inspection Objection form by calling generate_inspection_objection when the user has completed their inspection and wants to formally object to items. ' +
   'After the Inspection Objection is signed, help the user and seller reach a resolution, then call generate_inspection_resolution to document the agreed remedies or buyer waiver. ' +
   'Always call update_closing_milestone after generating these forms: inspection_objection_sent after objection, inspection_resolved after resolution. ' +
+  'ARIZONA CLOSING WORKFLOW: ' +
+  'Inspection period is 10 days by default. After inspection, generate the BINSR (generate_az_binsr) listing all items the buyer wants repaired or credited. ' +
+  'The seller has 5 days to respond to the BINSR. Track the binsrResponseDeadline. ' +
+  'Disclosures phase: remind the buyer to review the SPDS (Seller Property Disclosure Statement) and CLUE report provided by the seller/escrow company. ' +
+  'Earnest money must be deposited with the escrow company within 24-48 hours of offer acceptance — much tighter than other states. ' +
+  'When creating an AZ closing, always set inspectionPeriodDeadline (acceptance + 10 days) and binsrResponseDeadline (inspectionPeriodDeadline + 5 days). ' +
   'LOCATION: If the user asks to find properties "in my area", "near me", or any location-relative phrase, ' +
   'first ask: "Do you mind if I request your device\'s location?" ' +
   'Only call request_location after the user explicitly agrees. ' +
@@ -144,6 +156,8 @@ const TOOLS: Anthropic.Tool[] = [
   GenerateInspectionObjection.definition,
   GenerateInspectionResolution.definition,
   GenerateTestPreApproval.definition,
+  GenerateAzRpc.definition,
+  GenerateAzBinsr.definition,
 ] as Anthropic.Tool[]
 
 async function executeTool(
@@ -210,7 +224,9 @@ async function executeTool(
     case 'update_closing_milestone':
       return UpdateClosingMilestone.execute(userId, input as Parameters<typeof UpdateClosingMilestone.execute>[1])
     case 'generate_inspection_objection':
-    case 'generate_inspection_resolution': {
+    case 'generate_inspection_resolution':
+    case 'generate_az_rpc':
+    case 'generate_az_binsr': {
       await lambdaClient.send(new InvokeCommand({
         FunctionName: process.env.DOCUMENT_GENERATOR_FUNCTION_NAME!,
         InvocationType: 'Event',

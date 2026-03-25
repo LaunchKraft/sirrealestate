@@ -11,6 +11,8 @@ export interface ClosingDeadlines {
   loanConditionsDeadline?: string
   newLoanAvailabilityDeadline?: string
   closingDate?: string
+  inspectionPeriodDeadline?: string
+  binsrResponseDeadline?: string
 }
 
 export interface Closing {

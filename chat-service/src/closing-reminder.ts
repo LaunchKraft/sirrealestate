@@ -42,6 +42,14 @@ const DEADLINE_CONFIG: Record<string, { label: string; actionHint: string }> = {
     label: 'Closing Date',
     actionHint: 'Prepare for closing: confirm your title company appointment, arrange wire transfer, and complete the final walkthrough.',
   },
+  inspectionPeriodDeadline: {
+    label: 'Inspection Period Deadline',
+    actionHint: 'Complete your inspection and submit the BINSR to the seller before this deadline.',
+  },
+  binsrResponseDeadline: {
+    label: 'BINSR Response Deadline',
+    actionHint: 'The seller must respond to your BINSR by this deadline. Follow up with your agent if you have not received a response.',
+  },
 }
 
 function daysUntilDate(isoDate: string): number {

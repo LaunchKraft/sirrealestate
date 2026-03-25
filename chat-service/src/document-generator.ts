@@ -11,6 +11,8 @@ import * as SubmitOffer from './tools/submit-offer'
 import * as GenerateInspectionObjection from './tools/generate-inspection-objection'
 import * as GenerateInspectionResolution from './tools/generate-inspection-resolution'
 import * as GenerateTestPreApproval from './tools/generate-test-pre-approval'
+import * as GenerateAzRpc from './tools/generate-az-rpc'
+import * as GenerateAzBinsr from './tools/generate-az-binsr'
 
 interface DocumentGeneratorEvent {
   toolName: string
@@ -58,6 +60,12 @@ export async function handler(event: DocumentGeneratorEvent): Promise<void> {
         break
       case 'generate_test_pre_approval':
         await GenerateTestPreApproval.execute(userId, input as Parameters<typeof GenerateTestPreApproval.execute>[1])
+        break
+      case 'generate_az_rpc':
+        await GenerateAzRpc.execute(userId, input as Parameters<typeof GenerateAzRpc.execute>[1])
+        break
+      case 'generate_az_binsr':
+        await GenerateAzBinsr.execute(userId, input as Parameters<typeof GenerateAzBinsr.execute>[1])
         break
       default:
         console.error(`document-generator: unknown toolName=${toolName}`)
