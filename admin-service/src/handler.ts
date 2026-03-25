@@ -274,7 +274,7 @@ function buildBetaInviteEmail(email: string, signupUrl: string): { subject: stri
                     <p style="margin:0;font-size:15px;color:rgba(255,255,255,0.85)">Your private beta invitation is ready</p>
                   </td>
                   <td style="vertical-align:middle;text-align:right;padding-left:24px;width:120px">
-                    <img src="https://app.sirrealtor.com/logo.png" alt="Sir Realtor" width="100" style="display:block;border:0;border-radius:12px" />
+                    <img src="https://app.sirrealtor.com/logo.png" alt="Sir Realtor" width="100" style="display:block;border:0;border-radius:50%" />
                     <p style="margin:6px 0 0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.75);text-align:center">Sir Realtor</p>
                   </td>
                 </tr>
@@ -289,7 +289,7 @@ function buildBetaInviteEmail(email: string, signupUrl: string): { subject: stri
                 We're thrilled to invite you to the <strong>Sir Realtor private beta</strong> — your AI-powered real estate agent that finds, tracks, and helps you make offers on homes, all through natural conversation.
               </p>
               <p style="margin:0 0 32px;font-size:16px;color:#1a2233;line-height:1.6">
-                As a beta member, you'll get early access to features that are transforming how people buy homes. We'd love your feedback.
+                As a beta member, you'll get early access to features that are transforming how people buy homes. We'd love your feedback — you can share it directly with the AI agent inside the app, or just email us at <a href="mailto:feedback@sirrealtor.com" style="color:#0077b6;text-decoration:none">feedback@sirrealtor.com</a>.
               </p>
               <!-- CTA Button -->
               <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px">
