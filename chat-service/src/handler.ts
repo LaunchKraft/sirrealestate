@@ -30,6 +30,7 @@ import * as GetClosings from './tools/get-closings'
 import * as UpdateClosingMilestone from './tools/update-closing-milestone'
 import * as GenerateInspectionObjection from './tools/generate-inspection-objection'
 import * as GenerateInspectionResolution from './tools/generate-inspection-resolution'
+import * as GenerateTestPreApproval from './tools/generate-test-pre-approval'
 import type { ConversationMessage } from './types'
 
 const SYSTEM_PROMPT =
@@ -142,6 +143,7 @@ const TOOLS: Anthropic.Tool[] = [
   UpdateClosingMilestone.definition,
   GenerateInspectionObjection.definition,
   GenerateInspectionResolution.definition,
+  GenerateTestPreApproval.definition,
 ] as Anthropic.Tool[]
 
 async function executeTool(
@@ -179,13 +181,17 @@ async function executeTool(
       return GetOffers.execute(userId, input as Parameters<typeof GetOffers.execute>[1])
     case 'generate_purchase_agreement':
     case 'generate_agency_disclosure':
-    case 'generate_earnest_money_agreement': {
+    case 'generate_earnest_money_agreement':
+    case 'generate_test_pre_approval': {
       await lambdaClient.send(new InvokeCommand({
         FunctionName: process.env.DOCUMENT_GENERATOR_FUNCTION_NAME!,
         InvocationType: 'Event',
         Payload: JSON.stringify({ toolName: name, userId, input }),
       }))
-      return { message: 'Document generation has started. You will receive a signing email from Dropbox Sign within the next minute — please check your inbox.' }
+      const msg = name === 'generate_test_pre_approval'
+        ? 'Your test pre-approval letter is being generated and will appear in your Documents within the next minute.'
+        : 'Document generation has started. You will receive a signing email from Dropbox Sign within the next minute — please check your inbox.'
+      return { message: msg }
     }
     case 'submit_offer': {
       await lambdaClient.send(new InvokeCommand({
@@ -288,7 +294,15 @@ export async function handler(
       'and you will save it instantly. ' +
       'Whenever the user shares any feedback about Sir Realtor — features, experience, bugs, ' +
       'things they love, things they want improved — immediately call save_beta_feedback ' +
-      'with their exact words before responding.'
+      'with their exact words before responding. ' +
+      'TEST PRE-APPROVAL LETTER: If the user does not yet have a pre-approval letter in their documents ' +
+      '(check get_documents — no document with documentType "pre_approval_letter"), and they have ' +
+      'started a property search or expressed interest in making an offer, proactively offer to generate ' +
+      'a test pre-approval letter for beta testing. Say something like: "Since you\'re in beta, I can ' +
+      'generate a test pre-approval letter so you can experience the full offer workflow — would you like one?" ' +
+      'If they say yes, ask for: (1) their full name if not already known, (2) the lender name — offer ' +
+      'to make one up (e.g. "Meridian Home Lending") if they prefer, and (3) the pre-approval amount. ' +
+      'Once you have all three, call generate_test_pre_approval. Only offer this once per conversation.'
     : ''
 
   const systemPrompt = `${SYSTEM_PROMPT}${betaPromptSection}\n\nUser context: email=${userEmail}`

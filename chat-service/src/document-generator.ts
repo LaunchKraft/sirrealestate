@@ -10,6 +10,7 @@ import * as GenerateEarnestMoneyAgreement from './tools/generate-earnest-money-a
 import * as SubmitOffer from './tools/submit-offer'
 import * as GenerateInspectionObjection from './tools/generate-inspection-objection'
 import * as GenerateInspectionResolution from './tools/generate-inspection-resolution'
+import * as GenerateTestPreApproval from './tools/generate-test-pre-approval'
 
 interface DocumentGeneratorEvent {
   toolName: string
@@ -54,6 +55,9 @@ export async function handler(event: DocumentGeneratorEvent): Promise<void> {
         break
       case 'generate_inspection_resolution':
         await GenerateInspectionResolution.execute(userId, input as Parameters<typeof GenerateInspectionResolution.execute>[1])
+        break
+      case 'generate_test_pre_approval':
+        await GenerateTestPreApproval.execute(userId, input as Parameters<typeof GenerateTestPreApproval.execute>[1])
         break
       default:
         console.error(`document-generator: unknown toolName=${toolName}`)
