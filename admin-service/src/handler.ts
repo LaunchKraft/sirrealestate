@@ -251,7 +251,7 @@ async function inviteWaitlistEntry(event: APIGatewayProxyEventV2): Promise<APIGa
 }
 
 function buildBetaInviteEmail(email: string, signupUrl: string): { subject: string; html: string } {
-  const subject = "You're invited to Sir Realtor Beta"
+  const subject = "You're invited to try the Sir Realtor Beta App"
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -266,10 +266,19 @@ function buildBetaInviteEmail(email: string, signupUrl: string): { subject: stri
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07)">
           <!-- Header -->
           <tr>
-            <td style="background:linear-gradient(135deg,#00b4d8 0%,#0077b6 100%);padding:40px 48px;text-align:center">
-              <p style="margin:0 0 8px;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.8)">Sir Realtor</p>
-              <h1 style="margin:0;font-size:28px;font-weight:700;color:#ffffff;line-height:1.2">You're in. 🎉</h1>
-              <p style="margin:12px 0 0;font-size:16px;color:rgba(255,255,255,0.9)">Your beta invitation is ready</p>
+            <td style="background:linear-gradient(135deg,#00b4d8 0%,#0077b6 100%);padding:36px 48px">
+              <table cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="vertical-align:middle">
+                    <h1 style="margin:0 0 6px;font-size:26px;font-weight:700;color:#ffffff;line-height:1.2">You're invited to try the Sir Realtor Beta App 🎉</h1>
+                    <p style="margin:0;font-size:15px;color:rgba(255,255,255,0.85)">Your private beta invitation is ready</p>
+                  </td>
+                  <td style="vertical-align:middle;text-align:right;padding-left:24px;width:120px">
+                    <img src="https://app.sirrealtor.com/logo.png" alt="Sir Realtor" width="100" style="display:block;border:0;border-radius:12px" />
+                    <p style="margin:6px 0 0;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.75);text-align:center">Sir Realtor</p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <!-- Body -->
@@ -292,7 +301,7 @@ function buildBetaInviteEmail(email: string, signupUrl: string): { subject: stri
                   </td>
                 </tr>
               </table>
-              <!-- What to expect -->
+              <!-- What you'll get -->
               <table cellpadding="0" cellspacing="0" width="100%" style="background:#f0f7fb;border-radius:12px;margin-bottom:32px">
                 <tr>
                   <td style="padding:24px 28px">
@@ -301,8 +310,12 @@ function buildBetaInviteEmail(email: string, signupUrl: string): { subject: stri
                       <tr><td style="padding:4px 0;font-size:15px;color:#1a2233;line-height:1.5">🔍 &nbsp;AI-curated property matches based on your criteria</td></tr>
                       <tr><td style="padding:4px 0;font-size:15px;color:#1a2233;line-height:1.5">📅 &nbsp;Automated viewing scheduling with listing agents</td></tr>
                       <tr><td style="padding:4px 0;font-size:15px;color:#1a2233;line-height:1.5">📝 &nbsp;Guided offer creation and submission</td></tr>
+                      <tr><td style="padding:4px 0;font-size:15px;color:#1a2233;line-height:1.5">🏠 &nbsp;Step-by-step closing guidance and deadline tracking</td></tr>
                       <tr><td style="padding:4px 0;font-size:15px;color:#1a2233;line-height:1.5">💬 &nbsp;Your personal real estate agent, available 24/7</td></tr>
                     </table>
+                    <p style="margin:16px 0 0;font-size:13px;color:#6b7280;line-height:1.5;border-top:1px solid #dbeaf2;padding-top:14px">
+                      <strong>Beta test mode notice:</strong> During the beta, all outbound emails to listing agents are simulated — our admin team will respond to your viewing and offer requests on their behalf so you can experience the full workflow without contacting live agents.
+                    </p>
                   </td>
                 </tr>
               </table>
