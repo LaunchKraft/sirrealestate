@@ -14,6 +14,7 @@ export class DataStack extends Stack {
   readonly favoritesTable: dynamodb.Table
   readonly waitlistTable: dynamodb.Table
   readonly listingClicksTable: dynamodb.Table
+  readonly closingsTable: dynamodb.Table
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props)
@@ -136,6 +137,20 @@ export class DataStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
     })
 
+    this.closingsTable = new dynamodb.Table(this, 'ClosingsTable', {
+      tableName: 'SirRealtor-Closings',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'closingId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: RemovalPolicy.RETAIN,
+    })
+    this.closingsTable.addGlobalSecondaryIndex({
+      indexName: 'offerId-index',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'offerId', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    })
+
     new CfnOutput(this, 'UserProfileTableName', { value: this.userProfileTable.tableName })
     new CfnOutput(this, 'SearchResultsTableName', { value: this.searchResultsTable.tableName })
     new CfnOutput(this, 'NotificationsTableName', { value: this.notificationsTable.tableName })
@@ -146,5 +161,6 @@ export class DataStack extends Stack {
     new CfnOutput(this, 'FavoritesTableName', { value: this.favoritesTable.tableName })
     new CfnOutput(this, 'WaitlistTableName', { value: this.waitlistTable.tableName })
     new CfnOutput(this, 'ListingClicksTableName', { value: this.listingClicksTable.tableName })
+    new CfnOutput(this, 'ClosingsTableName', { value: this.closingsTable.tableName })
   }
 }

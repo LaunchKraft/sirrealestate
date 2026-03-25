@@ -1,4 +1,4 @@
-// ci trigger 6
+// ci trigger 7
 import Anthropic from '@anthropic-ai/sdk'
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb'
 import { marshall } from '@aws-sdk/util-dynamodb'
@@ -25,6 +25,9 @@ import * as SubmitOffer from './tools/submit-offer'
 import * as DeleteSearchProfile from './tools/delete-search-profile'
 import * as RequestLocation from './tools/request-location'
 import * as SaveBetaFeedback from './tools/save-beta-feedback'
+import * as CreateClosing from './tools/create-closing'
+import * as GetClosings from './tools/get-closings'
+import * as UpdateClosingMilestone from './tools/update-closing-milestone'
 import type { ConversationMessage } from './types'
 
 const SYSTEM_PROMPT =
@@ -78,6 +81,15 @@ const SYSTEM_PROMPT =
   'Call submit_offer only after the user explicitly confirms they are ready to submit. ' +
   'After submission, inform the user that the seller\'s agent has been emailed and typically responds within 24–48 hours. ' +
   'If the user later asks about the offer status, call get_offers and report the sellerResponse.status field. ' +
+  'CLOSING WORKFLOW: Once an offer status is "accepted" and signedForms.purchase_agreement is set, ' +
+  'proactively call create_closing to initialize the closing record — do not wait for the user to ask. ' +
+  'Ask whether they are paying cash or financing, and whether the property has an HOA, if not already known. ' +
+  'Seed the closingDate deadline from the offer terms. ' +
+  'At the start of conversations where accepted offers exist, call get_closings to check closing status. ' +
+  'As the user reports completing closing steps — inspection scheduled, title commitment received, ' +
+  'clear to close, etc. — call update_closing_milestone to record each one. ' +
+  'You can also update title company, escrow number, and deadlines via update_closing_milestone. ' +
+  'Guide the user through the next pending milestone one step at a time. ' +
   'LOCATION: If the user asks to find properties "in my area", "near me", or any location-relative phrase, ' +
   'first ask: "Do you mind if I request your device\'s location?" ' +
   'Only call request_location after the user explicitly agrees. ' +
@@ -120,6 +132,9 @@ const TOOLS: Anthropic.Tool[] = [
   DeleteSearchProfile.definition,
   RequestLocation.definition,
   SaveBetaFeedback.definition,
+  CreateClosing.definition,
+  GetClosings.definition,
+  UpdateClosingMilestone.definition,
 ] as Anthropic.Tool[]
 
 async function executeTool(
@@ -169,6 +184,12 @@ async function executeTool(
       return SubmitOffer.execute(userId, input as Parameters<typeof SubmitOffer.execute>[1], userEmail)
     case 'save_beta_feedback':
       return SaveBetaFeedback.execute(userEmail, input as Parameters<typeof SaveBetaFeedback.execute>[1])
+    case 'create_closing':
+      return CreateClosing.execute(userId, input as Parameters<typeof CreateClosing.execute>[1])
+    case 'get_closings':
+      return GetClosings.execute(userId)
+    case 'update_closing_milestone':
+      return UpdateClosingMilestone.execute(userId, input as Parameters<typeof UpdateClosingMilestone.execute>[1])
     default:
       return { error: `Unknown tool: ${name}` }
   }

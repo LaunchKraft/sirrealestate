@@ -31,6 +31,7 @@ interface ChatServiceStackProps extends StackProps {
   favoritesTable: dynamodb.Table
   waitlistTable: dynamodb.Table
   listingClicksTable: dynamodb.Table
+  closingsTable: dynamodb.Table
 }
 
 export class ChatServiceStack extends Stack {
@@ -48,6 +49,7 @@ export class ChatServiceStack extends Stack {
       FAVORITES_TABLE: props.favoritesTable.tableName,
       WAITLIST_TABLE: props.waitlistTable.tableName,
       LISTING_CLICKS_TABLE: props.listingClicksTable.tableName,
+      CLOSINGS_TABLE: props.closingsTable.tableName,
     }
 
     const bundlingOptions = { externalModules: [] as string[] }
@@ -127,6 +129,7 @@ export class ChatServiceStack extends Stack {
     props.offersTable.grantReadWriteData(chatLambda)
     props.waitlistTable.grantReadWriteData(chatLambda)
     props.listingClicksTable.grantReadWriteData(chatLambda)
+    props.closingsTable.grantReadWriteData(chatLambda)
 
     // SES permission for schedule_viewing tool
     chatLambda.addToRolePolicy(
@@ -169,6 +172,7 @@ export class ChatServiceStack extends Stack {
     props.favoritesTable.grantReadWriteData(dataLambda)
     props.waitlistTable.grantReadWriteData(dataLambda)
     props.listingClicksTable.grantReadWriteData(dataLambda)
+    props.closingsTable.grantReadWriteData(dataLambda)
 
     // SES permission for buyer notification on agent response
     dataLambda.addToRolePolicy(
@@ -196,6 +200,13 @@ export class ChatServiceStack extends Stack {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/chat', apigwv2.HttpMethod.POST),
       integration: chatIntegration,
+      authorizer: cognitoAuthorizer,
+    })
+
+    new apigwv2.HttpRoute(this, 'ClosingsRoute', {
+      httpApi: props.httpApi,
+      routeKey: apigwv2.HttpRouteKey.with('/closings', apigwv2.HttpMethod.GET),
+      integration: dataIntegration,
       authorizer: cognitoAuthorizer,
     })
 

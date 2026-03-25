@@ -256,6 +256,43 @@ export interface Offer {
   submittedAt?: string
 }
 
+// ---------------------------------------------------------------------------
+// Closing types
+// ---------------------------------------------------------------------------
+
+export interface ClosingDeadlines {
+  /** Colorado: Inspection Objection Deadline */
+  inspectionObjectionDeadline?: string     // ISO date
+  inspectionResolutionDeadline?: string
+  titleObjectionDeadline?: string
+  appraisalDeadline?: string
+  appraisalObjectionDeadline?: string
+  appraisalResolutionDeadline?: string
+  loanConditionsDeadline?: string
+  newLoanAvailabilityDeadline?: string
+  closingDate?: string
+}
+
+export interface Closing {
+  userId: string
+  closingId: string
+  offerId: string
+  listingId: string
+  listingAddress: string
+  propertyState: string
+  financingType: 'cash' | 'financed'
+  hasHoa: boolean
+  deadlines: ClosingDeadlines
+  /** milestoneId → ISO timestamp when the milestone was completed */
+  milestones: Record<string, string>
+  titleCompany?: string
+  titleContactEmail?: string
+  escrowNumber?: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Favorite {
   userId: string
   listingId: string
