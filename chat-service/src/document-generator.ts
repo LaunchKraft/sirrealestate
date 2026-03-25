@@ -1,20 +1,23 @@
 /**
- * Async document generation Lambda.
+ * Async background task Lambda.
  * Invoked fire-and-forget from the chat Lambda to avoid the 30-second
- * API Gateway timeout during PDF generation + S3 upload + Dropbox Sign calls.
+ * API Gateway timeout during PDF generation + S3 upload + Dropbox Sign calls,
+ * and offer submission (SES emails + DynamoDB write).
  */
 import * as GeneratePurchaseAgreement from './tools/generate-purchase-agreement'
 import * as GenerateAgencyDisclosure from './tools/generate-agency-disclosure'
 import * as GenerateEarnestMoneyAgreement from './tools/generate-earnest-money-agreement'
+import * as SubmitOffer from './tools/submit-offer'
 
 interface DocumentGeneratorEvent {
   toolName: string
   userId: string
+  userEmail?: string
   input: unknown
 }
 
 export async function handler(event: DocumentGeneratorEvent): Promise<void> {
-  const { toolName, userId, input } = event
+  const { toolName, userId, userEmail, input } = event
   console.log(`document-generator started: toolName=${toolName} userId=${userId}`)
 
   try {
@@ -35,6 +38,13 @@ export async function handler(event: DocumentGeneratorEvent): Promise<void> {
         await GenerateEarnestMoneyAgreement.execute(
           userId,
           input as Parameters<typeof GenerateEarnestMoneyAgreement.execute>[1],
+        )
+        break
+      case 'submit_offer':
+        await SubmitOffer.execute(
+          userId,
+          input as Parameters<typeof SubmitOffer.execute>[1],
+          userEmail ?? '',
         )
         break
       default:

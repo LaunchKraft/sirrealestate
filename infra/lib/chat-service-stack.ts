@@ -87,6 +87,15 @@ export class ChatServiceStack extends Stack {
     props.offersTable.grantReadWriteData(documentGeneratorLambda)
     props.documentsTable.grantReadWriteData(documentGeneratorLambda)
     props.documentBucket.grantReadWrite(documentGeneratorLambda)
+    // SES permission for submit_offer (emails seller's agent and buyer)
+    documentGeneratorLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:SendEmail'],
+        resources: [
+          `arn:aws:ses:${this.region}:${this.account}:identity/${props.domainName}`,
+        ],
+      }),
+    )
 
     // Chat Lambda
     const chatLambda = new NodejsFunction(this, 'ChatLambda', {

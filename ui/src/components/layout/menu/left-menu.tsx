@@ -172,8 +172,6 @@ export default function LeftMenu() {
           </Typography>
         </NavLink>
 
-        <Divider className="my-1" />
-
         {/* Documents nav link with upload button */}
         <input
           ref={fileInputRef}
@@ -221,6 +219,8 @@ export default function LeftMenu() {
             </span>
           </Tooltip>
         </div>
+
+        <Divider className="my-1" />
 
         <SidebarSection
           title="My Searches"

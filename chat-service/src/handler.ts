@@ -180,8 +180,14 @@ async function executeTool(
       }))
       return { message: 'Document generation has started. You will receive a signing email from Dropbox Sign within the next minute — please check your inbox.' }
     }
-    case 'submit_offer':
-      return SubmitOffer.execute(userId, input as Parameters<typeof SubmitOffer.execute>[1], userEmail)
+    case 'submit_offer': {
+      await lambdaClient.send(new InvokeCommand({
+        FunctionName: process.env.DOCUMENT_GENERATOR_FUNCTION_NAME!,
+        InvocationType: 'Event',
+        Payload: JSON.stringify({ toolName: name, userId, userEmail, input }),
+      }))
+      return { message: 'Offer submitted! The seller\'s agent has been emailed the signed purchase agreement and a response link. Offer status is now "submitted". The seller typically responds within 24–48 hours.' }
+    }
     case 'save_beta_feedback':
       return SaveBetaFeedback.execute(userEmail, input as Parameters<typeof SaveBetaFeedback.execute>[1])
     case 'create_closing':
