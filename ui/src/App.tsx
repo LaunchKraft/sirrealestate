@@ -22,6 +22,7 @@ import SellerResponsePage from '@/pages/SellerResponsePage'
 import NotificationsPage from '@/pages/NotificationsPage'
 import FavoritesPage from '@/pages/FavoritesPage'
 import DashboardPage from '@/pages/DashboardPage'
+import DocumentsPage from '@/pages/DocumentsPage'
 import IconGalleryPage from '@/pages/IconGalleryPage'
 import OfferDetailPage from '@/pages/offers/OfferDetailPage'
 
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/offers/:offerId" element={<OfferDetailPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/chat" replace />} />

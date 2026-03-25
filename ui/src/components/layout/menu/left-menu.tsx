@@ -1,22 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { Box, Divider, Typography } from '@mui/material'
+import { Box, Divider, IconButton, Tooltip, Typography } from '@mui/material'
 import { useLayoutContext } from '@/components/layout/layout-context'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
-import { MessageSquare, User, Search, Eye, FileText, DollarSign, Home, BarChart2, ChevronDown } from 'lucide-react'
-import ProfilePanel from '@/components/sidebar/ProfilePanel'
+import { MessageSquare, Search, Eye, Folder, Upload, DollarSign, Home, BarChart2, ChevronDown } from 'lucide-react'
 import SearchProfileCard from '@/components/sidebar/SearchProfileCard'
 import FavoritesCard from '@/components/sidebar/FavoritesCard'
 import ViewingCard from '@/components/sidebar/ViewingCard'
-import DocumentPanel from '@/components/sidebar/DocumentPanel'
 import OfferCard from '@/components/sidebar/OfferCard'
+import NameMismatchDialog from '@/components/documents/NameMismatchDialog'
 import { useUserProfile } from '@/hooks/useUserProfile'
 import { useSearchResults } from '@/hooks/useSearchResults'
 import { useViewings } from '@/hooks/useViewings'
 import { useDocuments } from '@/hooks/useDocuments'
+import { useDocumentUpload } from '@/hooks/useDocumentUpload'
 import { useOffers } from '@/hooks/useOffers'
 import { useFavoritesContext } from '@/components/favorites/FavoritesContext'
 import { cn } from '@/lib/utils'
+
+const DOCS_LAST_VISIT_KEY = 'documents_last_visit'
 
 function SidebarSection({
   title,
@@ -82,6 +84,22 @@ export default function LeftMenu() {
   const { documents, refetch: refetchDocuments } = useDocuments()
   const { offers, refetch: refetchOffers } = useOffers()
   const { favorites } = useFavoritesContext()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { upload, isUploading, nameMismatch, clearNameMismatch, updateProfileName } = useDocumentUpload()
+
+  const newDocsCount = useMemo(() => {
+    const lastVisit = localStorage.getItem(DOCS_LAST_VISIT_KEY)
+    if (!lastVisit) return documents.length
+    const lastVisitTime = new Date(lastVisit).getTime()
+    return documents.filter((d) => new Date(d.uploadedAt).getTime() > lastVisitTime).length
+  }, [documents])
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    await upload(file)
+  }
 
   useEffect(() => registerProfileRefetch(refetchProfile), [registerProfileRefetch, refetchProfile])
   useEffect(() => registerSearchResultsRefetch(refetchSearchResults), [registerSearchResultsRefetch, refetchSearchResults])
@@ -151,20 +169,53 @@ export default function LeftMenu() {
 
         <Divider className="my-1" />
 
-        <SidebarSection
-          title="My Profile"
-          icon={<User size={16} />}
-          defaultOpen
-        >
-          <ProfilePanel profile={profile} />
-        </SidebarSection>
-
-        <SidebarSection
-          title="My Documents"
-          icon={<FileText size={16} />}
-        >
-          <DocumentPanel documentList={documents} />
-        </SidebarSection>
+        {/* Documents nav link with upload button */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <NameMismatchDialog
+          nameMismatch={nameMismatch}
+          onUpdate={updateProfileName}
+          onDismiss={clearNameMismatch}
+        />
+        <div className="flex items-center rounded-xl">
+          <NavLink
+            to="/documents"
+            className={({ isActive }) =>
+              cn(
+                'flex flex-1 flex-row items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-text-secondary hover:bg-grey-50 hover:text-text-primary',
+              )
+            }
+          >
+            <Folder size={20} />
+            <Typography variant="body2" component="span" className="font-medium flex-1">
+              Documents
+            </Typography>
+            {newDocsCount > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-white">
+                {newDocsCount > 99 ? '99+' : newDocsCount}
+              </span>
+            )}
+          </NavLink>
+          <Tooltip title="Upload document" arrow>
+            <span>
+              <IconButton
+                size="small"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className={cn('mx-1 text-text-secondary', isUploading && 'animate-pulse')}
+              >
+                <Upload size={16} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </div>
 
         <SidebarSection
           title="My Searches"

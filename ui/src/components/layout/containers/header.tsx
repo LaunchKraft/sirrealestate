@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Avatar, Box, Button, Chip, Divider, Menu, MenuItem, Popover, Typography } from '@mui/material'
+import { Avatar, Box, Button, Chip, Divider, Popover, Typography } from '@mui/material'
 import { useLayoutContext } from '@/components/layout/layout-context'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
 import logo from '@/assets/logo.png'
@@ -8,6 +8,7 @@ import { Menu as MenuIcon, Bell } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserProfile } from '@/hooks/useUserProfile'
 import { useNotifications, type AppNotification } from '@/hooks/useNotifications'
+import ProfilePanel from '@/components/sidebar/ProfilePanel'
 
 const TYPE_LABEL: Record<string, string> = {
   new_listing: 'New Listing Match',
@@ -159,20 +160,24 @@ export default function Header() {
           {initials}
         </Avatar>
 
-        <Menu
-          anchorEl={userMenuAnchor}
+        <Popover
           open={Boolean(userMenuAnchor)}
+          anchorEl={userMenuAnchor}
           onClose={() => setUserMenuAnchor(null)}
-          className="mt-1"
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          slotProps={{ paper: { sx: { width: 300, mt: 1, borderRadius: 3 } } }}
         >
-          <MenuItem disabled>
-            <Typography variant="body2" className="text-text-secondary">
-              {email}
-            </Typography>
-          </MenuItem>
-          <MenuItem
+          <Box className="p-3">
+            <ProfilePanel profile={profile} />
+          </Box>
+          <Divider />
+          <Button
+            fullWidth
+            size="small"
+            variant="text"
+            color="error"
+            sx={{ py: 1.5, borderRadius: 0, borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}
             onClick={async () => {
               setUserMenuAnchor(null)
               await signOut()
@@ -180,8 +185,8 @@ export default function Header() {
             }}
           >
             Sign out
-          </MenuItem>
-        </Menu>
+          </Button>
+        </Popover>
       </Box>
     </Box>
   )
