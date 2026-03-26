@@ -1,4 +1,4 @@
-// ci trigger 10
+// ci trigger 11
 import Anthropic from '@anthropic-ai/sdk'
 import { DynamoDBClient, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb'
 import { marshall } from '@aws-sdk/util-dynamodb'
@@ -350,6 +350,25 @@ export const TOOLS: Anthropic.Tool[] = [
   GenerateMnPurchaseAgreement.definition,
   GenerateMnAddendum.definition,
 ] as Anthropic.Tool[]
+
+// State-specific tools follow the naming convention generate_[xx]_*
+// where [xx] is a 2-letter lowercase state code.
+const STATE_TOOL_REGEX = /^generate_([a-z]{2})_/
+
+/**
+ * Returns the tool list filtered to generic tools + tools for the given states.
+ * Falls back to the full TOOLS list if no states are provided (e.g. new user
+ * with no search profile yet).
+ */
+export function getToolsForStates(activeStates: string[]): Anthropic.Tool[] {
+  if (activeStates.length === 0) return TOOLS
+  const stateSet = new Set(activeStates.map((s) => s.toLowerCase()))
+  return TOOLS.filter((tool) => {
+    const match = tool.name.match(STATE_TOOL_REGEX)
+    if (!match) return true       // generic tool — always include
+    return stateSet.has(match[1]) // state-specific — only if user is in that state
+  })
+}
 
 export async function executeTool(
   name: string,

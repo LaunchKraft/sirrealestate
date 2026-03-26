@@ -1,4 +1,4 @@
-// ci trigger 5
+// ci trigger 6
 /**
  * WebSocket chat handler.
  * Handles $connect (save connection record), $disconnect (delete record),
@@ -10,7 +10,7 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { ApiGatewayManagementApiClient, PostToConnectionCommand, GoneException } from '@aws-sdk/client-apigatewaymanagementapi'
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda'
 import type { MessageParam, ToolUseBlock } from '@anthropic-ai/sdk/resources/messages'
-import { SYSTEM_PROMPT, TOOLS, executeTool, getClient } from './handler'
+import { SYSTEM_PROMPT, TOOLS, executeTool, getClient, getToolsForStates } from './handler'
 import type { ConversationMessage } from './types'
 
 const dynamo = new DynamoDBClient({})
@@ -140,18 +140,39 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
     ConditionExpression: 'attribute_not_exists(userId)',
   })).catch(() => { /* already exists */ })
 
-  // Beta user check
-  let isBetaUser = false
-  if (userEmail && process.env.WAITLIST_TABLE) {
-    const waitlistResult = await dynamo.send(new GetItemCommand({
-      TableName: process.env.WAITLIST_TABLE,
-      Key: { email: { S: userEmail.toLowerCase() } },
-      ProjectionExpression: '#s',
-      ExpressionAttributeNames: { '#s': 'status' },
-    })).catch(() => null)
-    const status = waitlistResult?.Item?.status?.S
-    isBetaUser = status === 'invited_beta' || status === 'accepted_beta'
+  // Beta user check + user profile state fetch — run in parallel
+  const [waitlistResult, profileResult] = await Promise.all([
+    userEmail && process.env.WAITLIST_TABLE
+      ? dynamo.send(new GetItemCommand({
+          TableName: process.env.WAITLIST_TABLE,
+          Key: { email: { S: userEmail.toLowerCase() } },
+          ProjectionExpression: '#s',
+          ExpressionAttributeNames: { '#s': 'status' },
+        })).catch(() => null)
+      : Promise.resolve(null),
+    dynamo.send(new GetItemCommand({
+      TableName: process.env.USER_PROFILE_TABLE!,
+      Key: marshall({ userId }),
+      ProjectionExpression: 'searchProfiles, desiredState',
+    })).catch(() => null),
+  ])
+
+  const status = waitlistResult?.Item?.status?.S
+  const isBetaUser = status === 'invited_beta' || status === 'accepted_beta'
+
+  // Extract the states the user is actively searching in
+  const activeStates: string[] = []
+  if (profileResult?.Item) {
+    const profile = unmarshall(profileResult.Item) as { searchProfiles?: { criteria?: { state?: string } }[]; desiredState?: string }
+    for (const sp of profile.searchProfiles ?? []) {
+      if (sp.criteria?.state) activeStates.push(sp.criteria.state)
+    }
+    if (profile.desiredState && !activeStates.includes(profile.desiredState)) {
+      activeStates.push(profile.desiredState)
+    }
   }
+  const tools = getToolsForStates(activeStates)
+  console.log(`ws: connectionId=${connectionId} activeStates=[${activeStates.join(',')}] tools=${tools.length}/${TOOLS.length}`)
 
   const betaPromptSection = isBetaUser
     ? '\n\nBETA USER: This user is a valued Sir Realtor beta participant. ' +
@@ -216,7 +237,7 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
         model: process.env.ANTHROPIC_MODEL_ID!,
         max_tokens: 4096,
         system: systemPrompt,
-        tools: TOOLS,
+        tools,
         messages: trimmedForApi(conversationMessages),
       })
 
