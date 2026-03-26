@@ -1,5 +1,22 @@
 import { fetchAuthSession } from 'aws-amplify/auth'
 import type { ChatRequest, ChatResponse } from '@/types'
+import type { Viewing } from '@/hooks/useViewings'
+
+export interface ViewingConfirmedPush {
+  type: 'viewing_confirmed'
+  viewing: Viewing
+  chatMessage: string
+}
+
+export type ServerPushMessage = ViewingConfirmedPush
+
+type PushHandler = (msg: ServerPushMessage) => void
+const pushHandlers = new Set<PushHandler>()
+
+export function onServerPush(handler: PushHandler): () => void {
+  pushHandlers.add(handler)
+  return () => pushHandlers.delete(handler)
+}
 
 const WS_URL = import.meta.env.VITE_WS_URL
 
@@ -24,21 +41,29 @@ async function getSocket(): Promise<WebSocket> {
   socket = await connect(token)
 
   socket.onmessage = (event) => {
-    if (!pending) return
-    const { resolve, reject } = pending
-    pending = null
     try {
-      const data = JSON.parse(event.data as string) as ChatResponse & { error?: string }
-      if (data.error) {
-        reject(new Error(data.error))
-      } else if (!Array.isArray(data.messages)) {
+      const data = JSON.parse(event.data as string) as (ChatResponse & { error?: string }) | ServerPushMessage
+      if ('type' in data) {
+        pushHandlers.forEach((h) => h(data as ServerPushMessage))
+        return
+      }
+      if (!pending) return
+      const { resolve, reject } = pending
+      pending = null
+      if ((data as ChatResponse & { error?: string }).error) {
+        reject(new Error((data as ChatResponse & { error?: string }).error))
+      } else if (!Array.isArray((data as ChatResponse).messages)) {
         // API Gateway sends non-standard frames on integration errors (e.g. 29s timeout)
         reject(new Error('Unexpected response from server'))
       } else {
-        resolve(data)
+        resolve(data as ChatResponse)
       }
     } catch {
-      reject(new Error('Invalid WebSocket response'))
+      if (pending) {
+        const { reject } = pending
+        pending = null
+        reject(new Error('Invalid WebSocket response'))
+      }
     }
   }
 

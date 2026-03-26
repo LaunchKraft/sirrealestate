@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material'
 import { chat } from '@/services/api'
+import { onServerPush } from '@/services/ws-chat'
 import { useDocumentUpload } from '@/hooks/useDocumentUpload'
 import NameMismatchDialog from '@/components/documents/NameMismatchDialog'
 import ChatMessage from '@/pages/chat/chat-message'
@@ -102,6 +103,19 @@ export default function ChatPage() {
   const { isListening, isSupported, startListening, stopListening } = useSpeechRecognition({
     onResult: handleSpeechResult,
   })
+
+  // Listen for server-pushed viewing confirmations and inject an AI bubble
+  useEffect(() => {
+    return onServerPush((msg) => {
+      if (msg.type === 'viewing_confirmed') {
+        setConversation((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), type: 'AI', message: msg.chatMessage, animate: true },
+        ])
+        invalidateViewings()
+      }
+    })
+  }, [invalidateViewings])
 
   // If launched with ?feedback=viewingId or ?prompt=..., pre-fill the input
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { DynamoDBClient, DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, ScanCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb'
+import { ApiGatewayManagementApiClient, PostToConnectionCommand, GoneException } from '@aws-sdk/client-apigatewaymanagementapi'
 import type { AttributeValue } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
@@ -115,6 +116,41 @@ async function getSearchResults(userId: string): Promise<APIGatewayProxyResultV2
   return json(200, { results, grouped })
 }
 
+async function pushViewingConfirmed(userId: string, viewing: Viewing): Promise<void> {
+  const connectionsResult = await dynamo.send(
+    new QueryCommand({
+      TableName: process.env.WS_CONNECTIONS_TABLE!,
+      IndexName: 'userId-index',
+      KeyConditionExpression: 'userId = :uid',
+      ExpressionAttributeValues: { ':uid': { S: userId } },
+    }),
+  )
+  if (!connectionsResult.Items?.length) return
+
+  const confirmedDate = new Date(viewing.proposedDateTime!).toLocaleString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  })
+  const chatMessage = `Great news! Your viewing at **${viewing.listingAddress}** has been confirmed for **${confirmedDate}**. Check your upcoming viewings in the sidebar.`
+  const payload = JSON.stringify({ type: 'viewing_confirmed', viewing, chatMessage })
+
+  const mgmt = new ApiGatewayManagementApiClient({ endpoint: process.env.WS_CALLBACK_URL! })
+  await Promise.all(
+    connectionsResult.Items.map(async (item) => {
+      const { connectionId } = unmarshall(item) as { connectionId: string }
+      try {
+        await mgmt.send(new PostToConnectionCommand({ ConnectionId: connectionId, Data: Buffer.from(payload) }))
+      } catch (err) {
+        if (err instanceof GoneException) {
+          await dynamo.send(new DeleteItemCommand({
+            TableName: process.env.WS_CONNECTIONS_TABLE!,
+            Key: { connectionId: { S: connectionId } },
+          })).catch(() => {})
+        }
+      }
+    }),
+  )
+}
+
 async function recordViewingResponse(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const { viewingId, slot } = event.queryStringParameters ?? {}
   if (!viewingId || slot === undefined) {
@@ -169,21 +205,35 @@ async function recordViewingResponse(event: APIGatewayProxyEventV2): Promise<API
   )
   const buyerEmail = profileResult.Item ? (unmarshall(profileResult.Item) as UserProfile).email : undefined
 
-  if (buyerEmail) {
-    const updatedViewing: Viewing = { ...viewing, agentSelectedSlot: selectedSlot }
-    const chatUrl = 'https://app.sirrealtor.com/chat'
-    const { subject, html } = viewingAgentResponseToBuyerEmail(updatedViewing, !isNone, chatUrl)
-    await ses.send(
-      new SendEmailCommand({
-        Source: 'Sir Realtor <noreply@sirrealtor.com>',
-        Destination: { ToAddresses: [buyerEmail] },
-        Message: {
-          Subject: { Data: subject },
-          Body: { Html: { Data: html } },
-        },
-      }),
-    )
+  const updatedViewing: Viewing = {
+    ...viewing,
+    status: newStatus as Viewing['status'],
+    agentSelectedSlot: selectedSlot,
+    agentRespondedAt: now,
+    ...(!isNone ? { proposedDateTime: selectedSlot } : {}),
   }
+
+  const emailTask = buyerEmail
+    ? (async () => {
+        const chatUrl = 'https://app.sirrealtor.com/chat'
+        const { subject, html } = viewingAgentResponseToBuyerEmail(updatedViewing, !isNone, chatUrl)
+        await ses.send(
+          new SendEmailCommand({
+            Source: 'Sir Realtor <noreply@sirrealtor.com>',
+            Destination: { ToAddresses: [buyerEmail] },
+            Message: { Subject: { Data: subject }, Body: { Html: { Data: html } } },
+          }),
+        )
+      })()
+    : Promise.resolve()
+
+  const wsPushTask = !isNone
+    ? pushViewingConfirmed(viewing.userId, updatedViewing).catch((err: unknown) =>
+        console.error('WS push failed for viewing confirmation', err),
+      )
+    : Promise.resolve()
+
+  await Promise.all([emailTask, wsPushTask])
 
   return json(200, { ok: true })
 }

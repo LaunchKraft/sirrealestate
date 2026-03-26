@@ -168,6 +168,11 @@ export class DataStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY, // ephemeral — TTL cleans up stale records
       timeToLiveAttribute: 'ttl',
     })
+    this.wsConnectionsTable.addGlobalSecondaryIndex({
+      indexName: 'userId-index',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.KEYS_ONLY,
+    })
 
     new CfnOutput(this, 'UserProfileTableName', { value: this.userProfileTable.tableName })
     new CfnOutput(this, 'SearchResultsTableName', { value: this.searchResultsTable.tableName })

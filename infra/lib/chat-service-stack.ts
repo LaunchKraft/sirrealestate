@@ -227,6 +227,7 @@ export class ChatServiceStack extends Stack {
     props.listingClicksTable.grantReadWriteData(dataLambda)
     props.closingsTable.grantReadWriteData(dataLambda)
     props.messageFeedbackTable.grantReadWriteData(dataLambda)
+    props.wsConnectionsTable.grantReadWriteData(dataLambda)
 
     // SES permission for buyer notification on agent response
     dataLambda.addToRolePolicy(
@@ -557,6 +558,14 @@ export class ChatServiceStack extends Stack {
     // Callback URL used in Phase 2 by ApiGatewayManagementApiClient
     const wsCallbackUrl = `https://${wsApi.apiId}.execute-api.${this.region}.amazonaws.com/${wsStage.stageName}`
     chatWsLambda.addEnvironment('WS_CALLBACK_URL', wsCallbackUrl)
+
+    // Allow dataLambda to push viewing confirmations to connected clients
+    dataLambda.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['execute-api:ManageConnections'],
+      resources: [`arn:aws:execute-api:${this.region}:${this.account}:${wsApi.apiId}/${wsStage.stageName}/*`],
+    }))
+    dataLambda.addEnvironment('WS_CALLBACK_URL', wsCallbackUrl)
+    dataLambda.addEnvironment('WS_CONNECTIONS_TABLE', props.wsConnectionsTable.tableName)
 
     new CfnOutput(this, 'WebSocketUrl', {
       value: `wss://${wsApi.apiId}.execute-api.${this.region}.amazonaws.com/${wsStage.stageName}`,
