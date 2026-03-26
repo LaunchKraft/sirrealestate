@@ -514,10 +514,12 @@ export class ChatServiceStack extends Stack {
       resources: [`arn:aws:ses:${this.region}:${this.account}:identity/${props.domainName}`],
     }))
 
-    // Allow chatWsLambda to invoke itself asynchronously (bypasses 29s API GW timeout)
+    // Allow chatWsLambda to invoke itself asynchronously (bypasses 29s API GW timeout).
+    // Use account/region pseudo-params instead of chatWsLambda.functionArn to avoid
+    // a CDK circular dependency (Lambda → Policy → Lambda ARN → Lambda).
     chatWsLambda.addToRolePolicy(new iam.PolicyStatement({
       actions: ['lambda:InvokeFunction'],
-      resources: [chatWsLambda.functionArn],
+      resources: [`arn:aws:lambda:${this.region}:${this.account}:function:*`],
     }))
     // Disable async retries — duplicate processing would cause double responses
     chatWsLambda.configureAsyncInvoke({ retryAttempts: 0 })
