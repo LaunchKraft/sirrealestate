@@ -61,7 +61,7 @@ import * as GenerateMnPurchaseAgreement from './tools/generate-mn-purchase-agree
 import * as GenerateMnAddendum from './tools/generate-mn-addendum'
 import type { ConversationMessage } from './types'
 
-const SYSTEM_PROMPT =
+export const SYSTEM_PROMPT =
   'You are SirRealtor, an expert AI real estate agent. You help users find properties by ' +
   'understanding their needs through natural conversation. You can save search profiles, ' +
   'show recent property matches, schedule viewings, and collect feedback — all via tool use. ' +
@@ -286,7 +286,7 @@ const dynamo = new DynamoDBClient({})
 const lambdaClient = new LambdaClient({})
 let anthropic: Anthropic | null = null
 
-async function getClient(): Promise<Anthropic> {
+export async function getClient(): Promise<Anthropic> {
   if (anthropic) return anthropic
   const { SecretString } = await secretsManager.send(
     new GetSecretValueCommand({ SecretId: process.env.ANTHROPIC_API_KEY_SECRET_ARN! }),
@@ -295,7 +295,7 @@ async function getClient(): Promise<Anthropic> {
   return anthropic
 }
 
-const TOOLS: Anthropic.Tool[] = [
+export const TOOLS: Anthropic.Tool[] = [
   GetUserProfile.definition,
   UpdateUserDetails.definition,
   UpsertSearchProfile.definition,
@@ -351,7 +351,7 @@ const TOOLS: Anthropic.Tool[] = [
   GenerateMnAddendum.definition,
 ] as Anthropic.Tool[]
 
-async function executeTool(
+export async function executeTool(
   name: string,
   input: unknown,
   userId: string,

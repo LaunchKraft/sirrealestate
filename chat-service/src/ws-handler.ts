@@ -1,12 +1,15 @@
 // ci trigger 1
 /**
  * WebSocket chat handler.
- * Phase 1: manages connection lifecycle ($connect / $disconnect).
- * Phase 2: $default will run the full Anthropic agentic loop and
- *           post the response back via ApiGatewayManagementApi.
+ * Handles $connect (save connection record), $disconnect (delete record),
+ * and $default (full Anthropic agentic loop, response via postToConnection).
  */
-import { DynamoDBClient, PutItemCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb'
-import { marshall } from '@aws-sdk/util-dynamodb'
+import { DynamoDBClient, PutItemCommand, DeleteItemCommand, GetItemCommand } from '@aws-sdk/client-dynamodb'
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
+import { ApiGatewayManagementApiClient, PostToConnectionCommand, GoneException } from '@aws-sdk/client-apigatewaymanagementapi'
+import type { MessageParam, ToolUseBlock } from '@anthropic-ai/sdk/resources/messages'
+import { SYSTEM_PROMPT, TOOLS, executeTool, getClient } from './handler'
+import type { ConversationMessage } from './types'
 
 const dynamo = new DynamoDBClient({})
 
@@ -21,9 +24,35 @@ interface WsEvent {
   body?: string
 }
 
+interface WsConnection {
+  connectionId: string
+  userId: string
+  userEmail: string
+  givenName?: string
+  familyName?: string
+}
+
+async function postToConnection(connectionId: string, payload: unknown): Promise<boolean> {
+  const mgmt = new ApiGatewayManagementApiClient({ endpoint: process.env.WS_CALLBACK_URL })
+  try {
+    await mgmt.send(new PostToConnectionCommand({
+      ConnectionId: connectionId,
+      Data: Buffer.from(JSON.stringify(payload)),
+    }))
+    return true
+  } catch (err) {
+    if (err instanceof GoneException) {
+      console.log(`ws: connectionId=${connectionId} gone — client disconnected`)
+      return false
+    }
+    throw err
+  }
+}
+
 export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
   const { routeKey, connectionId, authorizer } = event.requestContext
 
+  // ── $connect ────────────────────────────────────────────────────────────────
   if (routeKey === '$connect') {
     const ttl = Math.floor(Date.now() / 1000) + 24 * 60 * 60 // 24-hour TTL
     await dynamo.send(new PutItemCommand({
@@ -42,6 +71,7 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
     return { statusCode: 200 }
   }
 
+  // ── $disconnect ──────────────────────────────────────────────────────────────
   if (routeKey === '$disconnect') {
     await dynamo.send(new DeleteItemCommand({
       TableName: process.env.WS_CONNECTIONS_TABLE!,
@@ -51,7 +81,151 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
     return { statusCode: 200 }
   }
 
-  // $default — Phase 2: Anthropic agentic loop + postToConnection response
-  console.log(`ws $default: connectionId=${connectionId} body=${event.body?.slice(0, 100)}`)
+  // ── $default — main chat logic ───────────────────────────────────────────────
+  const connectionResult = await dynamo.send(new GetItemCommand({
+    TableName: process.env.WS_CONNECTIONS_TABLE!,
+    Key: marshall({ connectionId }),
+  }))
+  if (!connectionResult.Item) {
+    console.error(`ws $default: no connection record for connectionId=${connectionId}`)
+    return { statusCode: 200 }
+  }
+  const conn = unmarshall(connectionResult.Item) as WsConnection
+  const { userId, userEmail, givenName, familyName } = conn
+
+  let body: { messages?: ConversationMessage[]; sessionId?: string }
+  try {
+    body = JSON.parse(event.body ?? '{}')
+  } catch {
+    await postToConnection(connectionId, { error: 'Invalid JSON body' })
+    return { statusCode: 200 }
+  }
+
+  const { messages, sessionId } = body
+  if (!messages?.length) {
+    await postToConnection(connectionId, { error: 'Missing messages' })
+    return { statusCode: 200 }
+  }
+
+  const resolvedSessionId = sessionId ?? userId
+  const client = await getClient()
+  const conversationMessages: MessageParam[] = messages as MessageParam[]
+
+  // Ensure profile row exists — seed name from connection record for Google sign-ins
+  const now = new Date().toISOString()
+  const profileSeed: Record<string, unknown> = { userId, email: userEmail, searchProfiles: [], createdAt: now, updatedAt: now }
+  if (givenName) profileSeed.firstName = givenName
+  if (familyName) profileSeed.lastName = familyName
+  await dynamo.send(new PutItemCommand({
+    TableName: process.env.USER_PROFILE_TABLE!,
+    Item: marshall(profileSeed),
+    ConditionExpression: 'attribute_not_exists(userId)',
+  })).catch(() => { /* already exists */ })
+
+  // Beta user check
+  let isBetaUser = false
+  if (userEmail && process.env.WAITLIST_TABLE) {
+    const waitlistResult = await dynamo.send(new GetItemCommand({
+      TableName: process.env.WAITLIST_TABLE,
+      Key: { email: { S: userEmail.toLowerCase() } },
+      ProjectionExpression: '#s',
+      ExpressionAttributeNames: { '#s': 'status' },
+    })).catch(() => null)
+    const status = waitlistResult?.Item?.status?.S
+    isBetaUser = status === 'invited_beta' || status === 'accepted_beta'
+  }
+
+  const betaPromptSection = isBetaUser
+    ? '\n\nBETA USER: This user is a valued Sir Realtor beta participant. ' +
+      'At the start of fresh conversations (when there is only one user message so far), ' +
+      'warmly welcome them to the beta, thank them personally for their early support, ' +
+      'and let them know their feedback directly shapes the product. ' +
+      'Tell them they can share product feedback with you at any time during any conversation ' +
+      'and you will save it instantly. ' +
+      'Whenever the user shares any feedback about Sir Realtor — features, experience, bugs, ' +
+      'things they love, things they want improved — immediately call save_beta_feedback ' +
+      'with their exact words before responding. ' +
+      'TEST PRE-APPROVAL LETTER: If the user does not yet have a pre-approval letter in their documents ' +
+      '(check get_documents — no document with documentType "pre_approval_letter"), and they have ' +
+      'started a property search or expressed interest in making an offer, proactively offer to generate ' +
+      'a test pre-approval letter for beta testing. Say something like: "Since you\'re in beta, I can ' +
+      'generate a test pre-approval letter so you can experience the full offer workflow — would you like one?" ' +
+      'If they say yes, ask for: (1) their full name if not already known, (2) the lender name — offer ' +
+      'to make one up (e.g. "Meridian Home Lending") if they prefer, and (3) the pre-approval amount. ' +
+      'Once you have all three, call generate_test_pre_approval. Only offer this once per conversation.'
+    : ''
+
+  const systemPrompt = `${SYSTEM_PROMPT}${betaPromptSection}\n\nUser context: email=${userEmail}`
+
+  try {
+    let reply = ''
+    let hasToolUse = false
+    const MAX_TOOL_ROUNDS = 10
+
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const response = await client.messages.create({
+        model: process.env.ANTHROPIC_MODEL_ID!,
+        max_tokens: 1024,
+        system: systemPrompt,
+        tools: TOOLS,
+        messages: conversationMessages,
+      })
+
+      conversationMessages.push({ role: 'assistant', content: response.content })
+
+      if (response.stop_reason === 'end_turn') {
+        const textBlock = response.content.find((b) => b.type === 'text')
+        reply = textBlock?.type === 'text' ? textBlock.text : ''
+        break
+      }
+
+      if (response.stop_reason === 'tool_use') {
+        hasToolUse = true
+        const toolUseBlocks = response.content.filter((b): b is ToolUseBlock => b.type === 'tool_use')
+
+        // request_location is handled client-side — send the action over the socket and return
+        const locationBlock = toolUseBlocks.find((b) => b.name === 'request_location')
+        if (locationBlock) {
+          await postToConnection(connectionId, {
+            reply: '',
+            sessionId: resolvedSessionId,
+            messages: conversationMessages as ConversationMessage[],
+            hasToolUse: false,
+            clientAction: 'request_location',
+            toolUseId: locationBlock.id,
+          })
+          return { statusCode: 200 }
+        }
+
+        const toolResults = await Promise.all(
+          toolUseBlocks.map(async (block) => {
+            const result = await executeTool(block.name, block.input, userId, userEmail)
+              .catch((err: unknown) => ({ error: String(err) }))
+            return {
+              type: 'tool_result' as const,
+              tool_use_id: block.id,
+              content: JSON.stringify(result),
+            }
+          }),
+        )
+
+        conversationMessages.push({ role: 'user', content: toolResults })
+        continue
+      }
+
+      break
+    }
+
+    await postToConnection(connectionId, {
+      reply,
+      sessionId: resolvedSessionId,
+      messages: conversationMessages as ConversationMessage[],
+      hasToolUse,
+    })
+  } catch (err) {
+    console.error(`ws $default: Anthropic call failed connectionId=${connectionId}`, err)
+    await postToConnection(connectionId, { error: 'Failed to invoke model' }).catch(() => {})
+  }
+
   return { statusCode: 200 }
 }
