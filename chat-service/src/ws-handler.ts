@@ -1,4 +1,4 @@
-// ci trigger 2
+// ci trigger 3
 /**
  * WebSocket chat handler.
  * Handles $connect (save connection record), $disconnect (delete record),
@@ -171,11 +171,15 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
         messages: conversationMessages,
       })
 
+      const toolNames = response.content.filter((b) => b.type === 'tool_use').map((b) => b.type === 'tool_use' ? b.name : '').join(',')
+      console.log(`ws loop: connectionId=${connectionId} round=${round} stop_reason=${response.stop_reason} tools=[${toolNames}]`)
+
       conversationMessages.push({ role: 'assistant', content: response.content })
 
       if (response.stop_reason === 'end_turn' || response.stop_reason === 'max_tokens') {
         const textBlock = response.content.find((b) => b.type === 'text')
         reply = textBlock?.type === 'text' ? textBlock.text : ''
+        console.log(`ws loop: connectionId=${connectionId} final stop_reason=${response.stop_reason} reply_length=${reply.length}`)
         break
       }
 
@@ -213,6 +217,7 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
         continue
       }
 
+      console.log(`ws loop: connectionId=${connectionId} round=${round} unexpected stop_reason=${response.stop_reason} — breaking`)
       break
     }
 
