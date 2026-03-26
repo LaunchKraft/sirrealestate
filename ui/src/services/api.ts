@@ -1,4 +1,4 @@
-// Zero React dependencies — portable as-is to any JS environment.
+// Zero React dependencies — portable as-is to any JS environment. // ci trigger 1
 import { fetchAuthSession } from 'aws-amplify/auth'
 import type { ChatRequest, ChatResponse } from '@/types'
 import { wsSend } from './ws-chat'
