@@ -1,12 +1,14 @@
-// ci trigger 3
+// ci trigger 4
 /**
  * WebSocket chat handler.
  * Handles $connect (save connection record), $disconnect (delete record),
- * and $default (full Anthropic agentic loop, response via postToConnection).
+ * and $default (dispatches to async self-invocation to bypass 29s API GW timeout).
+ * The async self-invocation carries _asyncProcess:true and runs the full Anthropic loop.
  */
 import { DynamoDBClient, PutItemCommand, DeleteItemCommand, GetItemCommand } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { ApiGatewayManagementApiClient, PostToConnectionCommand, GoneException } from '@aws-sdk/client-apigatewaymanagementapi'
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda'
 import type { MessageParam, ToolUseBlock } from '@anthropic-ai/sdk/resources/messages'
 import { SYSTEM_PROMPT, TOOLS, executeTool, getClient } from './handler'
 import type { ConversationMessage } from './types'
@@ -22,6 +24,7 @@ interface WsEvent {
     authorizer?: Record<string, string>
   }
   body?: string
+  _asyncProcess?: boolean
 }
 
 interface WsConnection {
@@ -81,7 +84,22 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
     return { statusCode: 200 }
   }
 
-  // ── $default — main chat logic ───────────────────────────────────────────────
+  // ── $default — dispatch to async self-invocation ────────────────────────────
+  // API Gateway WebSocket has a 29s integration timeout. We return 200 immediately
+  // and invoke this Lambda again asynchronously (_asyncProcess:true) to run the
+  // full Anthropic loop without racing against that limit.
+  if (!event._asyncProcess) {
+    const lambdaClient = new LambdaClient({})
+    await lambdaClient.send(new InvokeCommand({
+      FunctionName: process.env.AWS_LAMBDA_FUNCTION_NAME!,
+      InvocationType: 'Event',
+      Payload: Buffer.from(JSON.stringify({ ...event, _asyncProcess: true })),
+    }))
+    console.log(`ws $default: dispatched async connectionId=${connectionId}`)
+    return { statusCode: 200 }
+  }
+
+  // ── $process — main chat logic (async self-invocation) ──────────────────────
   const connectionResult = await dynamo.send(new GetItemCommand({
     TableName: process.env.WS_CONNECTIONS_TABLE!,
     Key: marshall({ connectionId }),

@@ -31,6 +31,9 @@ async function getSocket(): Promise<WebSocket> {
       const data = JSON.parse(event.data as string) as ChatResponse & { error?: string }
       if (data.error) {
         reject(new Error(data.error))
+      } else if (!Array.isArray(data.messages)) {
+        // API Gateway sends non-standard frames on integration errors (e.g. 29s timeout)
+        reject(new Error('Unexpected response from server'))
       } else {
         resolve(data)
       }

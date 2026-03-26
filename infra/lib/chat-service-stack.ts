@@ -1,4 +1,4 @@
-// ci trigger 9
+// ci trigger 10
 import * as path from 'path'
 import { Duration, Stack, CfnOutput, type StackProps } from 'aws-cdk-lib'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
@@ -513,6 +513,14 @@ export class ChatServiceStack extends Stack {
       actions: ['ses:SendEmail'],
       resources: [`arn:aws:ses:${this.region}:${this.account}:identity/${props.domainName}`],
     }))
+
+    // Allow chatWsLambda to invoke itself asynchronously (bypasses 29s API GW timeout)
+    chatWsLambda.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['lambda:InvokeFunction'],
+      resources: [chatWsLambda.functionArn],
+    }))
+    // Disable async retries — duplicate processing would cause double responses
+    chatWsLambda.configureAsyncInvoke({ maximumRetryAttempts: 0 })
 
     const wsAuthorizer = new WebSocketLambdaAuthorizer('WsAuthorizer', wsAuthorizerLambda, {
       identitySource: ['route.request.querystring.token'],
