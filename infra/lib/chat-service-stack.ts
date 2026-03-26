@@ -520,7 +520,7 @@ export class ChatServiceStack extends Stack {
       resources: [chatWsLambda.functionArn],
     }))
     // Disable async retries — duplicate processing would cause double responses
-    chatWsLambda.configureAsyncInvoke({ maximumRetryAttempts: 0 })
+    chatWsLambda.configureAsyncInvoke({ retryAttempts: 0 })
 
     const wsAuthorizer = new WebSocketLambdaAuthorizer('WsAuthorizer', wsAuthorizerLambda, {
       identitySource: ['route.request.querystring.token'],
