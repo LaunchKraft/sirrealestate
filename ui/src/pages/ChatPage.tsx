@@ -55,7 +55,11 @@ const SESSION_KEY = 'chat_session'
 function loadSession(): { conversation: Conversation[]; messages: ConversationMessage[]; sessionId?: string } {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      parsed.conversation = parsed.conversation.map((c: Conversation) => ({ ...c, animate: false }))
+      return parsed
+    }
   } catch { /* ignore */ }
   return { conversation: [INTRO_CONVERSATION], messages: [] }
 }

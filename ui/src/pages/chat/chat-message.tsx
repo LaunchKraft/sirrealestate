@@ -24,7 +24,7 @@ export default function ChatMessage({
   sessionId,
   onSuggestedQuestion,
 }: ChatMessageProps) {
-  const [isAnimating, setIsAnimating] = useState(true)
+  const [isAnimating, setIsAnimating] = useState(conversation.animate ?? false)
   const [rating, setRating] = useState<'up' | 'down' | null>(null)
   const [copied, setCopied] = useState(false)
 

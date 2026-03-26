@@ -16,7 +16,9 @@ export const definition = {
   description:
     'Schedule a property viewing by sending a request email to the seller\'s agent and a confirmation to the buyer. ' +
     'The buyer\'s availability windows are read automatically from their profile — do NOT ask them for times. ' +
-    'If their profile has no availability set, return the error and ask them to set their availability first using update_availability.',
+    'If the user just provided new availability in this same message, pass those windows via availabilityWindows ' +
+    'so this tool can run in parallel with update_availability instead of waiting for it. ' +
+    'If their profile has no availability set and none was provided, return the error and ask them to set their availability first using update_availability.',
   input_schema: {
     type: 'object',
     properties: {
@@ -28,6 +30,19 @@ export const definition = {
         type: 'string',
         description: 'The search profile ID that found this listing.',
       },
+      availabilityWindows: {
+        type: 'array',
+        description:
+          'Optional. Pass these when the user provided availability in the same message, so this tool can run in parallel with update_availability. Each item must have start and end as ISO 8601 datetimes.',
+        items: {
+          type: 'object',
+          properties: {
+            start: { type: 'string' },
+            end: { type: 'string' },
+          },
+          required: ['start', 'end'],
+        },
+      },
     },
     required: ['listingId', 'profileId'],
   },
@@ -36,6 +51,7 @@ export const definition = {
 interface ScheduleViewingInput {
   listingId: string
   profileId: string
+  availabilityWindows?: { start: string; end: string }[]
 }
 
 export async function execute(
@@ -45,24 +61,25 @@ export async function execute(
 ): Promise<{ viewingId: string; message: string } | { error: string }> {
   const now = new Date().toISOString()
 
-  // Load listing data and user profile in parallel
-  const [srResult, profileResult] = await Promise.all([
-    dynamo.send(
-      new GetItemCommand({
-        TableName: process.env.SEARCH_RESULTS_TABLE!,
-        Key: {
-          userId: { S: userId },
-          profileIdListingId: { S: `${input.profileId}#${input.listingId}` },
-        },
-      }),
-    ),
-    dynamo.send(
-      new GetItemCommand({
-        TableName: process.env.USER_PROFILE_TABLE!,
-        Key: { userId: { S: userId } },
-      }),
-    ),
-  ])
+  // Load listing data; only fetch profile if availability wasn't passed directly
+  const srFetch = dynamo.send(
+    new GetItemCommand({
+      TableName: process.env.SEARCH_RESULTS_TABLE!,
+      Key: {
+        userId: { S: userId },
+        profileIdListingId: { S: `${input.profileId}#${input.listingId}` },
+      },
+    }),
+  )
+  const profileFetch = input.availabilityWindows
+    ? null
+    : dynamo.send(
+        new GetItemCommand({
+          TableName: process.env.USER_PROFILE_TABLE!,
+          Key: { userId: { S: userId } },
+        }),
+      )
+  const [srResult, profileResult] = await Promise.all([srFetch, profileFetch])
 
   const searchResult = srResult.Item ? (unmarshall(srResult.Item) as SearchResult) : null
   const listing = searchResult?.listingData
@@ -70,8 +87,9 @@ export async function execute(
   const agentEmail = listing?.agentEmail ?? process.env.SES_TEST_RECIPIENT
   const agentName = listing?.agentName
 
-  const userProfile = profileResult.Item ? (unmarshall(profileResult.Item) as UserProfile) : null
-  const availabilityWindows = userProfile?.availability ?? []
+  const userProfile = profileResult?.Item ? (unmarshall(profileResult.Item) as UserProfile) : null
+  const availabilityWindows: { windowId?: string; start: string; end: string }[] =
+    input.availabilityWindows ?? userProfile?.availability ?? []
 
   if (availabilityWindows.length === 0) {
     return {
@@ -114,71 +132,76 @@ export async function execute(
 
   const chatUrl = `https://app.sirrealtor.com/chat`
 
-  // Email the seller's agent and record the notification regardless of send success
-  if (agentEmail) {
-    const { subject: agentSubject, html: agentHtml } = viewingRequestToAgentEmail(
-      viewing, userEmail, buyerName, availabilityWindows,
-    )
-    let agentStatus: 'sent' | 'failed' = 'failed'
+  // Fire agent email and buyer email concurrently
+  const agentTask = agentEmail
+    ? (async () => {
+        const { subject: agentSubject, html: agentHtml } = viewingRequestToAgentEmail(
+          viewing, userEmail, buyerName, availabilityWindows,
+        )
+        let agentStatus: 'sent' | 'failed' = 'failed'
+        try {
+          const bcc = process.env.AGENT_EMAIL_BCC
+          const toAddress = process.env.SES_TEST_RECIPIENT ?? agentEmail
+          await ses.send(new SendEmailCommand({
+            Source: 'Sir Realtor <noreply@sirrealtor.com>',
+            Destination: { ToAddresses: [toAddress], ...(bcc ? { BccAddresses: [bcc] } : {}) },
+            Message: { Subject: { Data: agentSubject }, Body: { Html: { Data: agentHtml } } },
+          }))
+          agentStatus = 'sent'
+        } catch (err) {
+          console.error('Failed to email agent for viewing request', err)
+        }
+        const agentNotification: Notification = {
+          userId,
+          notificationId: randomUUID(),
+          type: 'viewing_request',
+          channel: 'email',
+          direction: 'on_behalf_of_user',
+          recipientAddress: agentEmail,
+          subject: agentSubject,
+          body: agentHtml,
+          sentAt: now,
+          status: agentStatus,
+        }
+        await dynamo.send(new PutItemCommand({
+          TableName: process.env.NOTIFICATIONS_TABLE!,
+          Item: marshall(agentNotification, { removeUndefinedValues: true }),
+        }))
+      })()
+    : Promise.resolve()
+
+  const buyerTask = (async () => {
+    const { subject: confirmSubject, html: confirmHtml } = viewingConfirmationToBuyerEmail(viewing, chatUrl)
+    let buyerStatus: 'sent' | 'failed' = 'failed'
     try {
-      const bcc = process.env.AGENT_EMAIL_BCC
-      const toAddress = process.env.SES_TEST_RECIPIENT ?? agentEmail
       await ses.send(new SendEmailCommand({
         Source: 'Sir Realtor <noreply@sirrealtor.com>',
-        Destination: { ToAddresses: [toAddress], ...(bcc ? { BccAddresses: [bcc] } : {}) },
-        Message: { Subject: { Data: agentSubject }, Body: { Html: { Data: agentHtml } } },
+        Destination: { ToAddresses: [userEmail] },
+        Message: { Subject: { Data: confirmSubject }, Body: { Html: { Data: confirmHtml } } },
       }))
-      agentStatus = 'sent'
+      buyerStatus = 'sent'
     } catch (err) {
-      console.error('Failed to email agent for viewing request', err)
+      console.error('Failed to send viewing confirmation to buyer', err)
     }
-    const agentNotification: Notification = {
+    const buyerNotification: Notification = {
       userId,
       notificationId: randomUUID(),
-      type: 'viewing_request',
+      type: 'viewing_confirmation',
       channel: 'email',
-      direction: 'on_behalf_of_user',
-      recipientAddress: agentEmail,
-      subject: agentSubject,
-      body: agentHtml,
+      direction: 'to_user',
+      recipientAddress: userEmail,
+      subject: confirmSubject,
+      body: confirmHtml,
       sentAt: now,
-      status: agentStatus,
+      status: buyerStatus,
     }
     await dynamo.send(new PutItemCommand({
       TableName: process.env.NOTIFICATIONS_TABLE!,
-      Item: marshall(agentNotification, { removeUndefinedValues: true }),
+      Item: marshall(buyerNotification, { removeUndefinedValues: true }),
     }))
-  }
+  })()
 
-  // Email confirmation to buyer and record the notification regardless of send success
-  const { subject: confirmSubject, html: confirmHtml } = viewingConfirmationToBuyerEmail(viewing, chatUrl)
-  let buyerStatus: 'sent' | 'failed' = 'failed'
-  try {
-    await ses.send(new SendEmailCommand({
-      Source: 'Sir Realtor <noreply@sirrealtor.com>',
-      Destination: { ToAddresses: [userEmail] },
-      Message: { Subject: { Data: confirmSubject }, Body: { Html: { Data: confirmHtml } } },
-    }))
-    buyerStatus = 'sent'
-  } catch (err) {
-    console.error('Failed to send viewing confirmation to buyer', err)
-  }
-  const buyerNotification: Notification = {
-    userId,
-    notificationId: randomUUID(),
-    type: 'viewing_confirmation',
-    channel: 'email',
-    direction: 'to_user',
-    recipientAddress: userEmail,
-    subject: confirmSubject,
-    body: confirmHtml,
-    sentAt: now,
-    status: buyerStatus,
-  }
-  await dynamo.send(new PutItemCommand({
-    TableName: process.env.NOTIFICATIONS_TABLE!,
-    Item: marshall(buyerNotification, { removeUndefinedValues: true }),
-  }))
+  await Promise.all([agentTask, buyerTask])
 
   const agentMsg = agentEmail
     ? ` Request sent to ${agentName ?? 'the agent'} at ${agentEmail}.`
