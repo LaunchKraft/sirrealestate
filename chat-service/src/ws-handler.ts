@@ -1,4 +1,4 @@
-// ci trigger 4
+// ci trigger 5
 /**
  * WebSocket chat handler.
  * Handles $connect (save connection record), $disconnect (delete record),
@@ -175,6 +175,37 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
 
   const systemPrompt = `${SYSTEM_PROMPT}${betaPromptSection}\n\nUser context: email=${userEmail}`
 
+  // Trim tool_result content in older exchanges to keep input tokens under control.
+  // We preserve the 2 most recent tool exchanges at full fidelity; older ones are
+  // truncated to 300 chars. This prevents token accumulation across long conversations.
+  function trimmedForApi(messages: MessageParam[]): MessageParam[] {
+    const MAX_OLD_CHARS = 300
+    const KEEP_RECENT_EXCHANGES = 2
+
+    const toolUseIndices: number[] = []
+    messages.forEach((msg, i) => {
+      if (msg.role === 'assistant' && Array.isArray(msg.content) && msg.content.some((b) => b.type === 'tool_use')) {
+        toolUseIndices.push(i)
+      }
+    })
+    const trimFrom = toolUseIndices.length > KEEP_RECENT_EXCHANGES
+      ? toolUseIndices[toolUseIndices.length - KEEP_RECENT_EXCHANGES]
+      : 0
+
+    return messages.map((msg, i) => {
+      if (i >= trimFrom || !Array.isArray(msg.content)) return msg
+      return {
+        ...msg,
+        content: msg.content.map((block) => {
+          if (block.type === 'tool_result' && typeof block.content === 'string' && block.content.length > MAX_OLD_CHARS) {
+            return { ...block, content: `${block.content.slice(0, MAX_OLD_CHARS)}… [${block.content.length} chars]` }
+          }
+          return block
+        }),
+      }
+    })
+  }
+
   try {
     let reply = ''
     let hasToolUse = false
@@ -186,7 +217,7 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
         max_tokens: 4096,
         system: systemPrompt,
         tools: TOOLS,
-        messages: conversationMessages,
+        messages: trimmedForApi(conversationMessages),
       })
 
       const toolNames = response.content.filter((b) => b.type === 'tool_use').map((b) => b.type === 'tool_use' ? b.name : '').join(',')
