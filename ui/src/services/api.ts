@@ -1,6 +1,7 @@
 // Zero React dependencies — portable as-is to any JS environment.
 import { fetchAuthSession } from 'aws-amplify/auth'
 import type { ChatRequest, ChatResponse } from '@/types'
+import { wsSend } from './ws-chat'
 import type { UserProfile, AvailabilityWindow } from '@/hooks/useUserProfile'
 import type { SearchResult, Listing } from '@/hooks/useSearchResults'
 import type { Viewing } from '@/hooks/useViewings'
@@ -47,7 +48,8 @@ export const api = {
 }
 
 export const chat = {
-  send: (req: ChatRequest) => api.post<ChatResponse>('/chat', req),
+  send: (req: ChatRequest) =>
+    import.meta.env.VITE_WS_URL ? wsSend(req) : api.post<ChatResponse>('/chat', req),
 }
 
 export const chatFeedback = {
