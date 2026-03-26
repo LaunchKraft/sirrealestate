@@ -121,6 +121,9 @@ importers:
       '@aws-sdk/util-dynamodb':
         specifier: ^3.996.1
         version: 3.996.1(@aws-sdk/client-dynamodb@3.1000.0)
+      aws-jwt-verify:
+        specifier: ^5.1.1
+        version: 5.1.1
       pdf-parse:
         specifier: ^1.1.1
         version: 1.1.4
@@ -2235,6 +2238,10 @@ packages:
     resolution: {integrity: sha512-FHnyhnYZoRc2W0C9mNzhNn6fO2vH4xNINsKfJaA7AFDuymgQ39JhEnrM4AHaoikIBqXYeNLWElvvkusY9l3ulw==}
     engines: {node: '>= 18.0.0'}
     hasBin: true
+
+  aws-jwt-verify@5.1.1:
+    resolution: {integrity: sha512-j6whGdGJmQ27agk4ijY8RPv6itb8JLb7SCJ86fEnneTcSBrpxuwL8kLq6y5WVH95aIknyAloEqAsaOLS1J8ITQ==}
+    engines: {node: '>=18.0.0'}
 
   babel-plugin-macros@3.1.0:
     resolution: {integrity: sha512-Cg7TFGpIr01vOQNODXOOaGz2NpCU5gl8x1qJFbb6hbZxR7XrcE2vtbAsTAbJ7/xwJtUuJEw8K8Zr/AE0LHlesg==}
@@ -6865,6 +6872,8 @@ snapshots:
       constructs: 10.5.1
 
   aws-cdk@2.1108.0: {}
+
+  aws-jwt-verify@5.1.1: {}
 
   babel-plugin-macros@3.1.0:
     dependencies:
