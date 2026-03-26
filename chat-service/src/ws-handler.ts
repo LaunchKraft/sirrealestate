@@ -1,3 +1,4 @@
+// ci trigger 1
 /**
  * WebSocket chat handler.
  * Phase 1: manages connection lifecycle ($connect / $disconnect).
