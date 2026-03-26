@@ -101,7 +101,7 @@ export class AuthStack extends Stack {
       signInCaseSensitive: false,
       email: cognito.UserPoolEmail.withSES({
         fromEmail: `noreply@${props.domainName}`,
-        fromName: 'SirRealtor',
+        fromName: 'Sir Realtor',
         sesRegion: this.region,
         sesVerifiedDomain: props.domainName,
       }),

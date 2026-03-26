@@ -33,7 +33,7 @@ async function sendNotification(
   if (channel === 'email') {
     await ses.send(
       new SendEmailCommand({
-        Source: 'noreply@sirrealtor.com',
+        Source: 'Sir Realtor <noreply@sirrealtor.com>',
         Destination: { ToAddresses: [opts.to] },
         Message: {
           Subject: { Data: opts.subject },

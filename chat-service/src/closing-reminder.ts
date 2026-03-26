@@ -50,6 +50,18 @@ const DEADLINE_CONFIG: Record<string, { label: string; actionHint: string }> = {
     label: 'BINSR Response Deadline',
     actionHint: 'The seller must respond to your BINSR by this deadline. Follow up with your agent if you have not received a response.',
   },
+  optionPeriodDeadline: {
+    label: 'Option Period Deadline',
+    actionHint: 'Your option period expires soon. If you wish to terminate, written notice must be delivered to the seller before this deadline. If proceeding, make sure your inspection is complete and any amendments are signed.',
+  },
+  surveyDeadline: {
+    label: 'Survey Deadline',
+    actionHint: 'A survey or T-47 affidavit is due. Contact your title company to confirm the survey has been ordered and is on track.',
+  },
+  dueDiligenceDeadline: {
+    label: 'Due Diligence Deadline',
+    actionHint: 'Your due diligence period expires soon. Make sure your inspection is complete and you have reviewed all disclosures. If you wish to cancel, written notice must be delivered before this deadline to receive your earnest money refund.',
+  },
 }
 
 function daysUntilDate(isoDate: string): number {
@@ -119,7 +131,7 @@ export async function handler(): Promise<void> {
 
         await ses.send(
           new SendEmailCommand({
-            Source: 'noreply@sirrealtor.com',
+            Source: 'Sir Realtor <noreply@sirrealtor.com>',
             Destination: { ToAddresses: [email] },
             Message: { Subject: { Data: subject }, Body: { Html: { Data: html } } },
           }),

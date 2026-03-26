@@ -13,6 +13,9 @@ export interface ClosingDeadlines {
   closingDate?: string
   inspectionPeriodDeadline?: string
   binsrResponseDeadline?: string
+  optionPeriodDeadline?: string
+  surveyDeadline?: string
+  dueDiligenceDeadline?: string
 }
 
 export interface Closing {

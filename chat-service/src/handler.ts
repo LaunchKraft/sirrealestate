@@ -33,6 +33,32 @@ import * as GenerateInspectionResolution from './tools/generate-inspection-resol
 import * as GenerateTestPreApproval from './tools/generate-test-pre-approval'
 import * as GenerateAzRpc from './tools/generate-az-rpc'
 import * as GenerateAzBinsr from './tools/generate-az-binsr'
+import * as GenerateTxPurchaseAgreement from './tools/generate-tx-purchase-agreement'
+import * as GenerateTxFinancingAddendum from './tools/generate-tx-financing-addendum'
+import * as GenerateTxAmendment from './tools/generate-tx-amendment'
+import * as GenerateNvPurchaseAgreement from './tools/generate-nv-purchase-agreement'
+import * as GenerateNvAddendum from './tools/generate-nv-addendum'
+import * as GenerateUtRepc from './tools/generate-ut-repc'
+import * as GenerateIdPurchaseAgreement from './tools/generate-id-purchase-agreement'
+import * as GenerateIdAddendum from './tools/generate-id-addendum'
+import * as GenerateMtPurchaseAgreement from './tools/generate-mt-purchase-agreement'
+import * as GenerateMtAddendum from './tools/generate-mt-addendum'
+import * as GenerateOrPurchaseAgreement from './tools/generate-or-purchase-agreement'
+import * as GenerateOrAddendum from './tools/generate-or-addendum'
+import * as GenerateWaPurchaseAgreement from './tools/generate-wa-purchase-agreement'
+import * as GenerateWaAddendum from './tools/generate-wa-addendum'
+import * as GenerateNcPurchaseAgreement from './tools/generate-nc-purchase-agreement'
+import * as GenerateNcAddendum from './tools/generate-nc-addendum'
+import * as GenerateGaPurchaseAgreement from './tools/generate-ga-purchase-agreement'
+import * as GenerateGaAddendum from './tools/generate-ga-addendum'
+import * as GenerateTnPurchaseAgreement from './tools/generate-tn-purchase-agreement'
+import * as GenerateTnAddendum from './tools/generate-tn-addendum'
+import * as GenerateScPurchaseAgreement from './tools/generate-sc-purchase-agreement'
+import * as GenerateScAddendum from './tools/generate-sc-addendum'
+import * as GenerateFlPurchaseAgreement from './tools/generate-fl-purchase-agreement'
+import * as GenerateFlAddendum from './tools/generate-fl-addendum'
+import * as GenerateMnPurchaseAgreement from './tools/generate-mn-purchase-agreement'
+import * as GenerateMnAddendum from './tools/generate-mn-addendum'
 import type { ConversationMessage } from './types'
 
 const SYSTEM_PROMPT =
@@ -79,6 +105,13 @@ const SYSTEM_PROMPT =
   'Earnest money deadline is 24-48 hours after acceptance — remind the buyer promptly after offer is accepted. ' +
   'After the purchase agreement is signed, offer to generate the earnest money deposit agreement by calling ' +
   'generate_earnest_money_agreement. Ask the buyer for the deposit due date and escrow holder name if not yet known. ' +
+  'TEXAS OFFERS: ' +
+  'Texas uses TREC-promulgated forms — agents are legally required to use them. ' +
+  'Always collect optionFee (typically $100–500, negotiable) and optionPeriodDays (typically 5–10) before generating the TX contract. ' +
+  'Generate the TREC One to Four contract with generate_tx_purchase_agreement. ' +
+  'For financed buyers, ALWAYS also generate the TREC Third Party Financing Addendum with generate_tx_financing_addendum — it is a required separate document. ' +
+  'Earnest money must reach the title company within 3 business days of contract execution. ' +
+  'The IABS (Information About Brokerage Services) and a written buyer representation agreement are required by TREC rules. ' +
   'In Colorado, an agency disclosure (brokerage relationship disclosure) must be signed before an offer is submitted. ' +
   'When the offer status reaches "ready", check whether agencyDisclosureDocumentId is set on the offer. ' +
   'If not, call generate_agency_disclosure before proceeding — ask the user for the brokerage name and agent name ' +
@@ -108,6 +141,131 @@ const SYSTEM_PROMPT =
   'Disclosures phase: remind the buyer to review the SPDS (Seller Property Disclosure Statement) and CLUE report provided by the seller/escrow company. ' +
   'Earnest money must be deposited with the escrow company within 24-48 hours of offer acceptance — much tighter than other states. ' +
   'When creating an AZ closing, always set inspectionPeriodDeadline (acceptance + 10 days) and binsrResponseDeadline (inspectionPeriodDeadline + 5 days). ' +
+  'TEXAS CLOSING WORKFLOW: ' +
+  'The option period is TX-unique: the buyer pays a small option fee for an unrestricted right to terminate. The inspection always happens during the option period. ' +
+  'After inspection, if repairs or credits are needed, generate a TREC Amendment to Contract with generate_tx_amendment. Both parties must sign. ' +
+  'After the option period expires, the earnest money becomes at risk — the buyer can no longer terminate without cause. ' +
+  'Track optionPeriodDeadline closely — send reminder at 3 days and 1 day before expiration. ' +
+  'surveyDeadline: Texas buyers typically need either a new survey or a T-47 affidavit from the seller confirming no changes to an existing survey. Track this as the survey_received milestone. ' +
+  "The Seller's Disclosure Notice (SDN) is required by TX Property Code §5.008 — track as seller_disclosure_reviewed milestone. " +
+  'When creating a TX closing, always set optionPeriodDeadline (acceptance date + optionPeriodDays) and surveyDeadline (typically 5 days before closing). ' +
+  'NEVADA OFFERS: ' +
+  'Nevada uses NVAR forms. The key buyer protection is the Due Diligence Period (typically 10–15 days) — the buyer may cancel for any reason and receive a full EMD refund. ' +
+  'Always confirm dueDiligenceDays with the buyer before generating the contract. ' +
+  'Generate the purchase agreement with generate_nv_purchase_agreement. ' +
+  'Earnest money must be deposited with the escrow/title company within 3 business days of acceptance. ' +
+  'The Seller\'s Real Property Disclosure (SRPD) is required by NRS 113.130 — remind the buyer to review it during due diligence. ' +
+  'NEVADA CLOSING WORKFLOW: ' +
+  'The Due Diligence Period is the main inspection/review window — inspection, SRPD review, HOA docs, and financing all happen here. ' +
+  'After inspection, if repairs or credits are needed, generate an NVAR Addendum to Purchase Agreement with generate_nv_addendum. Both parties must sign. ' +
+  'HOA resale package fees are typically paid by the seller (per NRS Chapter 116). ' +
+  'When creating a NV closing, always set dueDiligenceDeadline (acceptance + dueDiligenceDays). ' +
+  'UTAH OFFERS: ' +
+  'Utah uses the UAR Real Estate Purchase Contract (REPC). Generate with generate_ut_repc. ' +
+  'The key buyer protection is the Due Diligence Deadline (default 14 calendar days) — the buyer may cancel for any reason and receive a full EMD refund during this period. ' +
+  'Earnest money is due within 3 business days of acceptance. ' +
+  'The Seller Property Condition Disclosure (SPCD) is required under the Utah Seller Disclosure Act (Utah Code §57-27) — remind the buyer to review it during due diligence. ' +
+  'Always confirm dueDiligenceDays with the buyer before generating the contract. ' +
+  'UTAH CLOSING WORKFLOW: ' +
+  'The Due Diligence Deadline is the main review window — inspection, SPCD review, HOA documents, and financing all happen here. ' +
+  'After the Due Diligence Deadline passes without cancellation, the earnest money becomes at risk. ' +
+  'When creating a UT closing, always set dueDiligenceDeadline (acceptance date + dueDiligenceDays). ' +
+  'IDAHO OFFERS: ' +
+  'Idaho uses IREC forms. Generate the Purchase and Sale Agreement with generate_id_purchase_agreement. ' +
+  'Inspection period defaults to 10 business days — confirm with the buyer before generating. ' +
+  'Earnest money is due within 3 business days of acceptance. ' +
+  'The Seller must provide an Idaho Property Condition Disclosure (Idaho Code § 55-2501) — remind buyer to review during inspection period. ' +
+  'IDAHO CLOSING WORKFLOW: ' +
+  'After inspection, if repairs or credits are needed, generate an Idaho Addendum with generate_id_addendum. Both parties must sign. ' +
+  'When creating an ID closing, always set inspectionDeadline (acceptance date + inspectionDays business days). ' +
+  'MONTANA OFFERS: ' +
+  'Montana uses MAR Buy-Sell Agreement forms. Generate with generate_mt_purchase_agreement. ' +
+  'Ask the buyer whether the property has associated water rights before generating — water rights are a key Montana-specific disclosure. ' +
+  'Inspection period defaults to 10 business days — confirm with the buyer before generating. ' +
+  'Earnest money is due within 2 business days of acceptance. ' +
+  'The Seller must provide a Montana Seller\'s Property Disclosure Statement (MCA § 37-51-313) — remind buyer to review during inspection period. ' +
+  'MONTANA CLOSING WORKFLOW: ' +
+  'After inspection, if repairs or credits are needed, generate a Montana Addendum with generate_mt_addendum. Both parties must sign. ' +
+  'When creating an MT closing, always set inspectionDeadline (acceptance date + inspectionDays business days). ' +
+  'OREGON OFFERS: ' +
+  'Oregon uses Oregon Realtors OREF-001 forms. Generate the Sale Agreement with generate_or_purchase_agreement. ' +
+  'Inspection period defaults to 10 business days — confirm with the buyer before generating. ' +
+  'Earnest money is due within 2 business days of acceptance. ' +
+  'The Seller must provide an OREF 020 Seller\'s Property Disclosure Statement (ORS 105.465) — buyer has 5 business days to review after receipt. ' +
+  'OREGON CLOSING WORKFLOW: ' +
+  'After inspection, if repairs or credits are needed, generate an Oregon Repair/Remedy Addendum with generate_or_addendum. Both parties must sign. ' +
+  'Seller has 5 business days to respond to repair requests. ' +
+  'When creating an OR closing, always set inspectionDeadline (acceptance date + inspectionDays business days). ' +
+  'WASHINGTON OFFERS: ' +
+  'Washington uses NWMLS Form 21. Generate the Purchase and Sale Agreement with generate_wa_purchase_agreement. ' +
+  'Washington uses "mutual acceptance date" — the date both parties have signed — as the start of all deadlines. ' +
+  'Inspection period defaults to 10 business days from mutual acceptance — confirm with the buyer before generating. ' +
+  'Earnest money is due within 2 business days of mutual acceptance. ' +
+  'The Seller must provide a Seller Disclosure Statement (NWMLS Form 17) per RCW 64.06.013 — buyer has 3 business days to revoke after receipt. ' +
+  'WASHINGTON CLOSING WORKFLOW: ' +
+  'After inspection, if repairs or credits are needed, generate a Washington Inspection Response / Addendum with generate_wa_addendum. Both parties must sign. ' +
+  'When creating a WA closing, always set mutualAcceptanceDate and inspectionDeadline (mutual acceptance + inspectionDays business days). ' +
+  'NORTH CAROLINA OFFERS: ' +
+  'NC uses Form 2-T (jointly approved by NC Realtors and NC Bar Association). Generate with generate_nc_purchase_agreement. ' +
+  'NC is UNIQUE: the buyer pays a non-refundable Due Diligence Fee (DD Fee) DIRECTLY to the seller at acceptance — always confirm this amount. ' +
+  'The DD Fee is credited toward the purchase price at closing but is forfeited if the buyer terminates during the Due Diligence Period. ' +
+  'The Due Diligence Period is typically 14–21 calendar days — confirm with the buyer. ' +
+  'Earnest money is held in escrow and ALSO becomes at risk after the Due Diligence Period ends. ' +
+  'Seller must provide a Residential Property Disclosure (NC G.S. § 47E). ' +
+  'NC closings MUST be conducted by a licensed NC attorney. ' +
+  'NORTH CAROLINA CLOSING WORKFLOW: ' +
+  'After inspection, use generate_nc_addendum (Form 310-T) to document agreed repairs or credits. Both parties must sign. ' +
+  'When creating an NC closing, always set dueDiligenceDeadline (acceptance date + dueDiligenceDays). ' +
+  'GEORGIA OFFERS: ' +
+  'Georgia uses GAR Form F20. Generate with generate_ga_purchase_agreement. ' +
+  'In Georgia, the "Binding Agreement Date" is when the LAST party signs — all deadlines run from this date. ' +
+  'EMD is due within 3 BANKING days of the Binding Agreement Date. ' +
+  'Ask if the buyer has any special stipulations to include (GA forms have a dedicated special stipulations section). ' +
+  'Due diligence period defaults to 10 days from Binding Agreement Date — confirm with the buyer. ' +
+  'GEORGIA CLOSING WORKFLOW: ' +
+  'After the due diligence period, use generate_ga_addendum to document agreed amendments. Both parties must sign. ' +
+  'When creating a GA closing, always set bindingAgreementDate and dueDiligenceDeadline. ' +
+  'TENNESSEE OFFERS: ' +
+  'Tennessee uses Tennessee Realtors Purchase and Sale Agreement. Generate with generate_tn_purchase_agreement. ' +
+  'Inspection period defaults to 10 business days — confirm with the buyer. ' +
+  'EMD is due within 5 days of acceptance. ' +
+  'Seller must provide a Residential Property Condition Disclosure (TCA § 66-5-201). ' +
+  'TENNESSEE CLOSING WORKFLOW: ' +
+  'After inspection, use generate_tn_addendum to document agreed amendments. Both parties must sign. ' +
+  'When creating a TN closing, always set inspectionDeadline (acceptance date + inspectionDays business days). ' +
+  'SOUTH CAROLINA OFFERS: ' +
+  'South Carolina uses SCR Form 400. Generate with generate_sc_purchase_agreement. ' +
+  'SC is an ATTORNEY STATE — all residential closings MUST be conducted by a licensed SC attorney. Always ask the buyer if they have a closing attorney selected. ' +
+  'EMD is due within 5 days of acceptance and is held by the closing attorney. ' +
+  'Inspection period defaults to 10 business days — confirm with the buyer. ' +
+  'Seller must provide a Residential Property Condition Disclosure (SC Code § 27-50-10). ' +
+  'SOUTH CAROLINA CLOSING WORKFLOW: ' +
+  'After inspection, use generate_sc_addendum to document agreed amendments. Both parties must sign. ' +
+  'When creating an SC closing, always set inspectionDeadline (acceptance date + inspectionDays business days). ' +
+  'FLORIDA OFFERS: ' +
+  'Florida uses the FAR/BAR Contract for Residential Sale and Purchase (CRSP) or AS IS variant. Generate with generate_fl_purchase_agreement. ' +
+  'Ask the buyer whether they want the standard CRSP or the AS IS variant — AS IS is common for cash/investor deals or properties needing work. ' +
+  'All Florida deadlines run from the "Effective Date" — when the LAST party signs. ' +
+  'EMD is due within 3 calendar days of the Effective Date. ' +
+  'Inspection period defaults to 15 calendar days — confirm with the buyer before generating. ' +
+  'For financed buyers, confirm loanApprovalDays (default 30 days from Effective Date). ' +
+  'Seller must provide Johnson v. Davis disclosures and a FREC-mandated property disclosure. ' +
+  'If the property has an HOA, the buyer has 3 business days to review HOA documents and may cancel (FL Statute § 720). ' +
+  'FLORIDA CLOSING WORKFLOW: ' +
+  'In an AS IS contract, the seller is NOT obligated to make repairs — the buyer\'s only remedy is to cancel and receive a full EMD refund during the inspection period. ' +
+  'In a standard CRSP contract, after inspection use generate_fl_addendum to document agreed repairs or credits. Both parties must sign. ' +
+  'When creating a FL closing, always set inspectionDeadline (Effective Date + inspectionDays calendar days) and, for financed offers, loanApprovalDeadline. ' +
+  'MINNESOTA OFFERS: ' +
+  'Minnesota uses the Minnesota Realtors Purchase Agreement. Generate with generate_mn_purchase_agreement. ' +
+  'Inspection period defaults to 10 business days — confirm with the buyer before generating. ' +
+  'EMD is due upon acceptance (same day or next business day) — much tighter than most states. ' +
+  'The Seller must provide a Seller\'s Disclosure of Material Facts (MN § 513.55). ' +
+  'If located in Minneapolis, note that a Truth-in-Housing report may be required by the city. ' +
+  'If the property has an HOA, the seller must provide an HOA resale certificate (MN § 515B.4-107). ' +
+  'MINNESOTA CLOSING WORKFLOW: ' +
+  'Buyer has the right to a final walk-through within 24 hours before closing. ' +
+  'After inspection, if repairs or credits are needed, use generate_mn_addendum to document agreed modifications. Both parties must sign. ' +
+  'When creating an MN closing, always set inspectionDeadline (acceptance date + inspectionDays business days). ' +
   'LOCATION: If the user asks to find properties "in my area", "near me", or any location-relative phrase, ' +
   'first ask: "Do you mind if I request your device\'s location?" ' +
   'Only call request_location after the user explicitly agrees. ' +
@@ -158,6 +316,32 @@ const TOOLS: Anthropic.Tool[] = [
   GenerateTestPreApproval.definition,
   GenerateAzRpc.definition,
   GenerateAzBinsr.definition,
+  GenerateTxPurchaseAgreement.definition,
+  GenerateTxFinancingAddendum.definition,
+  GenerateTxAmendment.definition,
+  GenerateNvPurchaseAgreement.definition,
+  GenerateNvAddendum.definition,
+  GenerateUtRepc.definition,
+  GenerateIdPurchaseAgreement.definition,
+  GenerateIdAddendum.definition,
+  GenerateMtPurchaseAgreement.definition,
+  GenerateMtAddendum.definition,
+  GenerateOrPurchaseAgreement.definition,
+  GenerateOrAddendum.definition,
+  GenerateWaPurchaseAgreement.definition,
+  GenerateWaAddendum.definition,
+  GenerateNcPurchaseAgreement.definition,
+  GenerateNcAddendum.definition,
+  GenerateGaPurchaseAgreement.definition,
+  GenerateGaAddendum.definition,
+  GenerateTnPurchaseAgreement.definition,
+  GenerateTnAddendum.definition,
+  GenerateScPurchaseAgreement.definition,
+  GenerateScAddendum.definition,
+  GenerateFlPurchaseAgreement.definition,
+  GenerateFlAddendum.definition,
+  GenerateMnPurchaseAgreement.definition,
+  GenerateMnAddendum.definition,
 ] as Anthropic.Tool[]
 
 async function executeTool(
@@ -226,7 +410,33 @@ async function executeTool(
     case 'generate_inspection_objection':
     case 'generate_inspection_resolution':
     case 'generate_az_rpc':
-    case 'generate_az_binsr': {
+    case 'generate_az_binsr':
+    case 'generate_tx_purchase_agreement':
+    case 'generate_tx_financing_addendum':
+    case 'generate_tx_amendment':
+    case 'generate_nv_purchase_agreement':
+    case 'generate_nv_addendum':
+    case 'generate_ut_repc':
+    case 'generate_id_purchase_agreement':
+    case 'generate_id_addendum':
+    case 'generate_mt_purchase_agreement':
+    case 'generate_mt_addendum':
+    case 'generate_or_purchase_agreement':
+    case 'generate_or_addendum':
+    case 'generate_wa_purchase_agreement':
+    case 'generate_wa_addendum':
+    case 'generate_nc_purchase_agreement':
+    case 'generate_nc_addendum':
+    case 'generate_ga_purchase_agreement':
+    case 'generate_ga_addendum':
+    case 'generate_tn_purchase_agreement':
+    case 'generate_tn_addendum':
+    case 'generate_sc_purchase_agreement':
+    case 'generate_sc_addendum':
+    case 'generate_fl_purchase_agreement':
+    case 'generate_fl_addendum':
+    case 'generate_mn_purchase_agreement':
+    case 'generate_mn_addendum': {
       await lambdaClient.send(new InvokeCommand({
         FunctionName: process.env.DOCUMENT_GENERATOR_FUNCTION_NAME!,
         InvocationType: 'Event',

@@ -175,7 +175,7 @@ async function recordViewingResponse(event: APIGatewayProxyEventV2): Promise<API
     const { subject, html } = viewingAgentResponseToBuyerEmail(updatedViewing, !isNone, chatUrl)
     await ses.send(
       new SendEmailCommand({
-        Source: 'noreply@sirrealtor.com',
+        Source: 'Sir Realtor <noreply@sirrealtor.com>',
         Destination: { ToAddresses: [buyerEmail] },
         Message: {
           Subject: { Data: subject },
@@ -560,7 +560,7 @@ async function confirmSellerUpload(event: APIGatewayProxyEventV2): Promise<APIGa
     )
     await ses.send(
       new SendEmailCommand({
-        Source: 'noreply@sirrealtor.com',
+        Source: 'Sir Realtor <noreply@sirrealtor.com>',
         Destination: { ToAddresses: [buyerEmail] },
         Message: { Subject: { Data: subject }, Body: { Html: { Data: html } } },
       }),
@@ -642,7 +642,7 @@ async function recordSellerDecision(event: APIGatewayProxyEventV2): Promise<APIG
     )
     await ses.send(
       new SendEmailCommand({
-        Source: 'noreply@sirrealtor.com',
+        Source: 'Sir Realtor <noreply@sirrealtor.com>',
         Destination: { ToAddresses: [buyerEmail] },
         Message: { Subject: { Data: subject }, Body: { Html: { Data: html } } },
       }),
@@ -869,7 +869,7 @@ async function cancelViewing(userId: string, event: APIGatewayProxyEventV2): Pro
       const bcc = process.env.AGENT_EMAIL_BCC
       const toAddress = process.env.SES_TEST_RECIPIENT ?? viewing.agentEmail
       await ses.send(new SendEmailCommand({
-        Source: 'noreply@sirrealtor.com',
+        Source: 'Sir Realtor <noreply@sirrealtor.com>',
         Destination: { ToAddresses: [toAddress], ...(bcc ? { BccAddresses: [bcc] } : {}) },
         Message: { Subject: { Data: subject }, Body: { Html: { Data: html } } },
       }))

@@ -41,6 +41,11 @@ export const definition = {
           loanConditionsDeadline: { type: 'string' },
           newLoanAvailabilityDeadline: { type: 'string' },
           closingDate: { type: 'string' },
+          inspectionPeriodDeadline: { type: 'string', description: 'AZ: 10-day inspection period deadline (acceptance + 10 days).' },
+          binsrResponseDeadline: { type: 'string', description: 'AZ: seller BINSR response deadline (inspectionPeriodDeadline + 5 days).' },
+          optionPeriodDeadline: { type: 'string', description: 'TX: option period expiration date (acceptance date + optionPeriodDays).' },
+          surveyDeadline: { type: 'string', description: 'TX: survey or T-47 affidavit due date (typically 5 days before closing).' },
+          dueDiligenceDeadline: { type: 'string', description: 'NV: due diligence period expiration date (acceptance date + dueDiligenceDays).' },
         },
       },
       titleCompany: {

@@ -124,7 +124,7 @@ export async function execute(
       const bcc = process.env.AGENT_EMAIL_BCC
       const toAddress = process.env.SES_TEST_RECIPIENT ?? agentEmail
       await ses.send(new SendEmailCommand({
-        Source: 'noreply@sirrealtor.com',
+        Source: 'Sir Realtor <noreply@sirrealtor.com>',
         Destination: { ToAddresses: [toAddress], ...(bcc ? { BccAddresses: [bcc] } : {}) },
         Message: { Subject: { Data: agentSubject }, Body: { Html: { Data: agentHtml } } },
       }))
@@ -155,7 +155,7 @@ export async function execute(
   let buyerStatus: 'sent' | 'failed' = 'failed'
   try {
     await ses.send(new SendEmailCommand({
-      Source: 'noreply@sirrealtor.com',
+      Source: 'Sir Realtor <noreply@sirrealtor.com>',
       Destination: { ToAddresses: [userEmail] },
       Message: { Subject: { Data: confirmSubject }, Body: { Html: { Data: confirmHtml } } },
     }))

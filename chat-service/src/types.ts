@@ -207,6 +207,8 @@ export interface PurchaseAgreementTerms {
   inclusions?: string[]           // appliances / fixtures included in sale
   exclusions?: string[]           // items seller is keeping
   sellerConcessions?: number      // seller-paid closing cost contribution
+  optionFee?: number              // TX: option fee paid for unrestricted termination right (typically $100–500)
+  optionPeriodDays?: number       // TX: number of days for the option period (typically 5–10)
 }
 
 export type SellerResponseStatus = 'pending' | 'received' | 'accepted' | 'countered' | 'rejected'
@@ -273,6 +275,9 @@ export interface ClosingDeadlines {
   closingDate?: string
   inspectionPeriodDeadline?: string   // AZ: 10-day inspection period
   binsrResponseDeadline?: string      // AZ: seller has 5 days to respond to BINSR
+  optionPeriodDeadline?: string       // TX: option period expiration (acceptance + optionPeriodDays)
+  surveyDeadline?: string             // TX: survey or T-47 affidavit due date
+  dueDiligenceDeadline?: string       // NV: due diligence period expiration (acceptance + dueDiligenceDays)
 }
 
 export interface Closing {

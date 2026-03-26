@@ -242,7 +242,7 @@ async function inviteWaitlistEntry(event: APIGatewayProxyEventV2): Promise<APIGa
   const signupUrl = `https://app.sirrealtor.com/beta-signup?email=${encodeURIComponent(email)}`
   const { subject, html } = buildBetaInviteEmail(email, signupUrl)
   await ses.send(new SendEmailCommand({
-    Source: 'noreply@sirrealtor.com',
+    Source: 'Sir Realtor <noreply@sirrealtor.com>',
     Destination: { ToAddresses: [email] },
     Message: { Subject: { Data: subject }, Body: { Html: { Data: html } } },
   }))

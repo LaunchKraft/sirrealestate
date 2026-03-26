@@ -164,11 +164,163 @@ const AZ_STEPS: WorkflowStep[] = [
   },
 ]
 
+// ─── Texas ────────────────────────────────────────────────────────────────────
+// TX uses TREC-promulgated forms. Agents are legally required to use them.
+// Includes IABS disclosure and buyer representation agreement requirements.
+
+const TX_STEPS: WorkflowStep[] = [
+  {
+    id: 'offer_created',
+    label: 'Offer Created',
+    description: 'Offer draft has been started',
+    isComplete: () => true,
+  },
+  {
+    id: 'terms_set',
+    label: 'Terms Set',
+    description: 'Offer price, option fee, option period days, and closing date confirmed',
+    isComplete: (o) => !!(o.terms?.offerPrice && o.terms?.closingDate),
+  },
+  {
+    id: 'iabs_acknowledged',
+    label: 'IABS Acknowledged',
+    description: 'Information About Brokerage Services disclosure acknowledged by buyer (required by TX law before substantive discussions)',
+    isComplete: (o) => !!o.signedForms?.['iabs'],
+  },
+  {
+    id: 'buyer_rep_signed',
+    label: 'Buyer Rep Agreement',
+    description: 'Written buyer representation agreement signed (required by TREC rules)',
+    isComplete: (o) => !!o.signedForms?.['buyer_rep'],
+  },
+  {
+    id: 'purchase_agreement_signed',
+    label: 'Purchase Agreement',
+    description: 'TREC One to Four Family Residential Contract signed by all buyers',
+    isComplete: (o) => !!o.signedForms?.['purchase_agreement'],
+  },
+  {
+    id: 'financing_addendum_signed',
+    label: 'Financing Addendum',
+    description: 'TREC Third Party Financing Addendum signed (required for all financed offers)',
+    isComplete: (o) => !!o.signedForms?.['financing_addendum'],
+  },
+  {
+    id: 'submitted',
+    label: 'Offer Submitted',
+    description: "Offer package delivered to the seller's agent",
+    isComplete: (o) => ['submitted', 'accepted', 'countered', 'rejected', 'withdrawn'].includes(o.status),
+  },
+  {
+    id: 'seller_response',
+    label: 'Seller Response',
+    description: 'Response received from the seller',
+    isComplete: (o) => ['accepted', 'countered', 'rejected'].includes(o.status),
+  },
+  {
+    id: 'emd_transferred',
+    label: 'EMD Transferred',
+    description: 'Earnest money delivered to title company within 3 business days of contract execution',
+    isComplete: (o) => !!o.earnestMoneyPaidAt,
+  },
+]
+
+// ─── Nevada ───────────────────────────────────────────────────────────────────
+// NV uses the NVAR Residential Purchase Agreement.
+// Key buyer protection: Due Diligence Period (typically 10–15 days) — buyer may cancel for any reason.
+// No agency disclosure step; SRPD (Seller's Real Property Disclosure) reviewed during due diligence.
+
+const NV_STEPS: WorkflowStep[] = [
+  {
+    id: 'offer_created',
+    label: 'Offer Created',
+    description: 'Offer draft has been started',
+    isComplete: () => true,
+  },
+  {
+    id: 'terms_set',
+    label: 'Terms Set',
+    description: 'Offer price, due diligence days, and closing date confirmed',
+    isComplete: (o) => !!(o.terms?.offerPrice && o.terms?.closingDate),
+  },
+  {
+    id: 'purchase_agreement_signed',
+    label: 'Purchase Agreement',
+    description: 'NVAR Residential Purchase Agreement signed by all buyers',
+    isComplete: (o) => !!o.signedForms?.['purchase_agreement'],
+  },
+  {
+    id: 'submitted',
+    label: 'Offer Submitted',
+    description: "Offer delivered to the seller's agent",
+    isComplete: (o) => ['submitted', 'accepted', 'countered', 'rejected', 'withdrawn'].includes(o.status),
+  },
+  {
+    id: 'seller_response',
+    label: 'Seller Response',
+    description: 'Response received from the seller',
+    isComplete: (o) => ['accepted', 'countered', 'rejected'].includes(o.status),
+  },
+  {
+    id: 'emd_transferred',
+    label: 'EMD Transferred',
+    description: 'Earnest money deposited with escrow company within 3 business days of acceptance',
+    isComplete: (o) => !!o.earnestMoneyPaidAt,
+  },
+]
+
+// ─── Utah ─────────────────────────────────────────────────────────────────────
+// UT uses the UAR Real Estate Purchase Contract (REPC).
+// Key buyer protection: Due Diligence Deadline (default 14 days) — buyer may cancel for any reason.
+// Earnest money is due within 3 business days of acceptance.
+
+const UT_STEPS: WorkflowStep[] = [
+  {
+    id: 'offer_created',
+    label: 'Offer Created',
+    description: 'Offer draft has been started',
+    isComplete: () => true,
+  },
+  {
+    id: 'terms_set',
+    label: 'Terms Set',
+    description: 'Offer price, due diligence days, and settlement deadline confirmed',
+    isComplete: (o) => !!(o.terms?.offerPrice && o.terms?.closingDate),
+  },
+  {
+    id: 'purchase_agreement_signed',
+    label: 'REPC Signed',
+    description: 'Utah Real Estate Purchase Contract (REPC) signed by all buyers',
+    isComplete: (o) => !!o.signedForms?.['purchase_agreement'],
+  },
+  {
+    id: 'submitted',
+    label: 'Offer Submitted',
+    description: "Offer delivered to the seller's agent",
+    isComplete: (o) => ['submitted', 'accepted', 'countered', 'rejected', 'withdrawn'].includes(o.status),
+  },
+  {
+    id: 'seller_response',
+    label: 'Seller Response',
+    description: 'Response received from the seller',
+    isComplete: (o) => ['accepted', 'countered', 'rejected'].includes(o.status),
+  },
+  {
+    id: 'emd_transferred',
+    label: 'EMD Transferred',
+    description: 'Earnest money deposited within 3 business days of acceptance',
+    isComplete: (o) => !!o.earnestMoneyPaidAt,
+  },
+]
+
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 const WORKFLOWS: Record<string, StateWorkflow> = {
   CO: { state: 'CO', stateName: 'Colorado', steps: CO_STEPS },
   AZ: { state: 'AZ', stateName: 'Arizona', steps: AZ_STEPS },
+  TX: { state: 'TX', stateName: 'Texas', steps: TX_STEPS },
+  NV: { state: 'NV', stateName: 'Nevada', steps: NV_STEPS },
+  UT: { state: 'UT', stateName: 'Utah', steps: UT_STEPS },
 }
 
 export function getWorkflow(propertyState?: string): StateWorkflow {

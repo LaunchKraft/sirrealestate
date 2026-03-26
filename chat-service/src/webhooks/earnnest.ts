@@ -117,7 +117,7 @@ export async function handleEarnnestWebhook(
     const { subject, html } = earnestMoneyReceivedEmail(offer.listingAddress, payload.amount, 'https://app.sirrealtor.com/chat')
     await ses.send(
       new SendEmailCommand({
-        Source: 'noreply@sirrealtor.com',
+        Source: 'Sir Realtor <noreply@sirrealtor.com>',
         Destination: { ToAddresses: [buyerEmail] },
         Message: { Subject: { Data: subject }, Body: { Html: { Data: html } } },
       }),
