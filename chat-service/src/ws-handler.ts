@@ -10,7 +10,7 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { ApiGatewayManagementApiClient, PostToConnectionCommand, GoneException } from '@aws-sdk/client-apigatewaymanagementapi'
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda'
 import type { MessageParam, ToolUseBlock } from '@anthropic-ai/sdk/resources/messages'
-import { SYSTEM_PROMPT, TOOLS, executeTool, getClient, getToolsForStates } from './handler'
+import { TOOLS, executeTool, getClient, getToolsForStates, getPromptForStates } from './handler'
 import type { ConversationMessage } from './types'
 
 const dynamo = new DynamoDBClient({})
@@ -194,7 +194,7 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
       'Once you have all three, call generate_test_pre_approval. Only offer this once per conversation.'
     : ''
 
-  const systemPrompt = `${SYSTEM_PROMPT}${betaPromptSection}\n\nUser context: email=${userEmail}`
+  const systemPrompt = `${getPromptForStates(activeStates)}${betaPromptSection}\n\nUser context: email=${userEmail}`
 
   // Trim tool_result content in older exchanges to keep input tokens under control.
   // We preserve the 2 most recent tool exchanges at full fidelity; older ones are
