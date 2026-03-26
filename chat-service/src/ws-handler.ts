@@ -1,4 +1,4 @@
-// ci trigger 1
+// ci trigger 2
 /**
  * WebSocket chat handler.
  * Handles $connect (save connection record), $disconnect (delete record),
@@ -165,7 +165,7 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       const response = await client.messages.create({
         model: process.env.ANTHROPIC_MODEL_ID!,
-        max_tokens: 1024,
+        max_tokens: 4096,
         system: systemPrompt,
         tools: TOOLS,
         messages: conversationMessages,
@@ -173,7 +173,7 @@ export async function handler(event: WsEvent): Promise<{ statusCode: number }> {
 
       conversationMessages.push({ role: 'assistant', content: response.content })
 
-      if (response.stop_reason === 'end_turn') {
+      if (response.stop_reason === 'end_turn' || response.stop_reason === 'max_tokens') {
         const textBlock = response.content.find((b) => b.type === 'text')
         reply = textBlock?.type === 'text' ? textBlock.text : ''
         break
