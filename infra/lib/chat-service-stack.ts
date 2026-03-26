@@ -4,8 +4,8 @@ import { Duration, Stack, CfnOutput, type StackProps } from 'aws-cdk-lib'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2'
-import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations'
-import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers'
+import { HttpLambdaIntegration, WebSocketLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations'
+import { HttpJwtAuthorizer, WebSocketLambdaAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as s3 from 'aws-cdk-lib/aws-s3'
@@ -34,6 +34,7 @@ interface ChatServiceStackProps extends StackProps {
   listingClicksTable: dynamodb.Table
   closingsTable: dynamodb.Table
   messageFeedbackTable: dynamodb.Table
+  wsConnectionsTable: dynamodb.Table
 }
 
 export class ChatServiceStack extends Stack {
@@ -452,6 +453,104 @@ export class ChatServiceStack extends Stack {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/waitlist/accept', apigwv2.HttpMethod.POST),
       integration: dataIntegration,
+    })
+
+    // -------------------------------------------------------------------------
+    // WebSocket API — no 29s timeout, connection-scoped chat sessions
+    // -------------------------------------------------------------------------
+
+    // Authorizer Lambda: validates Cognito ID token from ?token= query param on $connect
+    const wsAuthorizerLambda = new NodejsFunction(this, 'WsAuthorizerLambda', {
+      entry: path.join(__dirname, '../../chat-service/src/ws-authorizer.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_22_X,
+      timeout: Duration.seconds(10),
+      environment: {
+        COGNITO_USER_POOL_ID: props.userPool.userPoolId,
+        COGNITO_USER_POOL_CLIENT_ID: props.userPoolClient.userPoolClientId,
+      },
+      bundling: bundlingOptions,
+    })
+
+    // WebSocket chat Lambda — handles $connect, $disconnect, and $default
+    const chatWsLambda = new NodejsFunction(this, 'ChatWsLambda', {
+      entry: path.join(__dirname, '../../chat-service/src/ws-handler.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_22_X,
+      timeout: Duration.minutes(3),
+      memorySize: 512,
+      environment: {
+        ANTHROPIC_MODEL_ID,
+        ANTHROPIC_API_KEY_SECRET_ARN: anthropicApiKeySecret.secretArn,
+        DROPBOX_SIGN_API_KEY_SECRET_ARN: dropboxSignApiKeySecret.secretArn,
+        EARNNEST_API_KEY_SECRET_ARN: earnnestApiKeySecret.secretArn,
+        AGENT_EMAIL_BCC: 'noreply@sirrealtor.com',
+        SES_TEST_RECIPIENT: 'tim@sirrealtor.com',
+        WS_CONNECTIONS_TABLE: props.wsConnectionsTable.tableName,
+        SEARCH_WORKER_FUNCTION_NAME: props.searchWorkerLambda.functionName,
+        DOCUMENT_GENERATOR_FUNCTION_NAME: documentGeneratorLambda.functionName,
+        ...tableEnv,
+      },
+      bundling: bundlingOptions,
+    })
+
+    anthropicApiKeySecret.grantRead(chatWsLambda)
+    dropboxSignApiKeySecret.grantRead(chatWsLambda)
+    props.wsConnectionsTable.grantReadWriteData(chatWsLambda)
+    props.userProfileTable.grantReadWriteData(chatWsLambda)
+    props.searchResultsTable.grantReadData(chatWsLambda)
+    props.notificationsTable.grantWriteData(chatWsLambda)
+    props.viewingsTable.grantReadWriteData(chatWsLambda)
+    props.documentBucket.grantReadWrite(chatWsLambda)
+    props.documentsTable.grantReadWriteData(chatWsLambda)
+    props.offersTable.grantReadWriteData(chatWsLambda)
+    props.waitlistTable.grantReadWriteData(chatWsLambda)
+    props.listingClicksTable.grantReadWriteData(chatWsLambda)
+    props.closingsTable.grantReadWriteData(chatWsLambda)
+    props.searchWorkerLambda.grantInvoke(chatWsLambda)
+    documentGeneratorLambda.grantInvoke(chatWsLambda)
+    chatWsLambda.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ses:SendEmail'],
+      resources: [`arn:aws:ses:${this.region}:${this.account}:identity/${props.domainName}`],
+    }))
+
+    const wsAuthorizer = new WebSocketLambdaAuthorizer('WsAuthorizer', wsAuthorizerLambda, {
+      identitySource: ['route.request.querystring.token'],
+    })
+
+    const wsApi = new apigwv2.WebSocketApi(this, 'ChatWsApi', {
+      apiName: 'sirrealtor-chat-ws',
+      connectRouteOptions: {
+        authorizer: wsAuthorizer,
+        integration: new WebSocketLambdaIntegration('WsConnectIntegration', chatWsLambda),
+      },
+      disconnectRouteOptions: {
+        integration: new WebSocketLambdaIntegration('WsDisconnectIntegration', chatWsLambda),
+      },
+      defaultRouteOptions: {
+        integration: new WebSocketLambdaIntegration('WsDefaultIntegration', chatWsLambda),
+      },
+    })
+
+    const wsStage = new apigwv2.WebSocketStage(this, 'ChatWsStage', {
+      webSocketApi: wsApi,
+      stageName: 'prod',
+      autoDeploy: true,
+    })
+
+    // Allow chatWsLambda to push messages back to connected clients
+    chatWsLambda.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['execute-api:ManageConnections'],
+      resources: [`arn:aws:execute-api:${this.region}:${this.account}:${wsApi.apiId}/${wsStage.stageName}/*`],
+    }))
+
+    // Callback URL used in Phase 2 by ApiGatewayManagementApiClient
+    const wsCallbackUrl = `https://${wsApi.apiId}.execute-api.${this.region}.amazonaws.com/${wsStage.stageName}`
+    chatWsLambda.addEnvironment('WS_CALLBACK_URL', wsCallbackUrl)
+
+    new CfnOutput(this, 'WebSocketUrl', {
+      value: `wss://${wsApi.apiId}.execute-api.${this.region}.amazonaws.com/${wsStage.stageName}`,
+      description: 'VITE_WS_URL — WebSocket chat endpoint',
     })
 
     new CfnOutput(this, 'AnthropicModelId', {

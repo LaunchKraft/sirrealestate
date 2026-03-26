@@ -16,6 +16,7 @@ export class DataStack extends Stack {
   readonly listingClicksTable: dynamodb.Table
   readonly closingsTable: dynamodb.Table
   readonly messageFeedbackTable: dynamodb.Table
+  readonly wsConnectionsTable: dynamodb.Table
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props)
@@ -160,6 +161,14 @@ export class DataStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
     })
 
+    this.wsConnectionsTable = new dynamodb.Table(this, 'WsConnectionsTable', {
+      tableName: 'SirRealtor-WsConnections',
+      partitionKey: { name: 'connectionId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: RemovalPolicy.DESTROY, // ephemeral — TTL cleans up stale records
+      timeToLiveAttribute: 'ttl',
+    })
+
     new CfnOutput(this, 'UserProfileTableName', { value: this.userProfileTable.tableName })
     new CfnOutput(this, 'SearchResultsTableName', { value: this.searchResultsTable.tableName })
     new CfnOutput(this, 'NotificationsTableName', { value: this.notificationsTable.tableName })
@@ -172,5 +181,6 @@ export class DataStack extends Stack {
     new CfnOutput(this, 'ListingClicksTableName', { value: this.listingClicksTable.tableName })
     new CfnOutput(this, 'ClosingsTableName', { value: this.closingsTable.tableName })
     new CfnOutput(this, 'MessageFeedbackTableName', { value: this.messageFeedbackTable.tableName })
+    new CfnOutput(this, 'WsConnectionsTableName', { value: this.wsConnectionsTable.tableName })
   }
 }
