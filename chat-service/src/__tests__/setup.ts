@@ -1,0 +1,12 @@
+// Environment variables required by tool functions — set before any test runs.
+process.env.USER_PROFILE_TABLE = 'test-user-profiles'
+process.env.SEARCH_RESULTS_TABLE = 'test-search-results'
+process.env.VIEWINGS_TABLE = 'test-viewings'
+process.env.NOTIFICATIONS_TABLE = 'test-notifications'
+process.env.OFFERS_TABLE = 'test-offers'
+process.env.CLOSINGS_TABLE = 'test-closings'
+process.env.DOCUMENTS_TABLE = 'test-documents'
+process.env.DOCUMENT_BUCKET_NAME = 'test-documents-bucket'
+process.env.SEARCH_WORKER_FUNCTION_NAME = 'test-search-worker'
+process.env.WS_CONNECTIONS_TABLE = 'test-ws-connections'
+process.env.WS_CALLBACK_URL = 'https://test.execute-api.us-east-1.amazonaws.com/prod'
