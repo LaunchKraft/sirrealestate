@@ -292,7 +292,7 @@ function buildBetaInviteEmail(email: string, signupUrl: string): { subject: stri
                 As a beta member, you'll get early access to features that are transforming how people buy homes. We'd love your feedback — you can share it directly with the AI agent inside the app, or just email us at <a href="mailto:feedback@sirrealtor.com" style="color:#0077b6;text-decoration:none">feedback@sirrealtor.com</a>.
               </p>
               <!-- CTA Button -->
-              <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px">
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 16px">
                 <tr>
                   <td align="center" style="border-radius:10px;background:linear-gradient(135deg,#00b4d8 0%,#0077b6 100%)">
                     <a href="${signupUrl}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:0.01em">
@@ -301,6 +301,10 @@ function buildBetaInviteEmail(email: string, signupUrl: string): { subject: stri
                   </td>
                 </tr>
               </table>
+              <p style="margin:0 0 32px;font-size:13px;color:#6b7280;text-align:center;line-height:1.6">
+                If the button above doesn't appear, copy and paste this link into your browser:<br>
+                <a href="${signupUrl}" style="color:#0077b6;word-break:break-all">${signupUrl}</a>
+              </p>
               <!-- What you'll get -->
               <table cellpadding="0" cellspacing="0" width="100%" style="background:#f0f7fb;border-radius:12px;margin-bottom:32px">
                 <tr>
