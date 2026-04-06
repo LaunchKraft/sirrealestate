@@ -14,6 +14,7 @@ const dynamo = new DynamoDBClient({})
 const cognito = new CognitoIdentityProviderClient({})
 const ses = new SESClient({})
 
+
 const CONSUMER_USER_POOL_ID = process.env.CONSUMER_USER_POOL_ID!
 const USER_PROFILE_TABLE = process.env.USER_PROFILE_TABLE!
 const SEARCH_RESULTS_TABLE = process.env.SEARCH_RESULTS_TABLE!
