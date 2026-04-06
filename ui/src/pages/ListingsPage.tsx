@@ -18,7 +18,6 @@ import {
 } from '@mui/material'
 import { useSearchResults } from '@/hooks/useSearchResults'
 import { useUserProfile } from '@/hooks/useUserProfile'
-import { useFloatingChat } from '@/components/chat/floating-chat-context'
 import ListingsTable from './listings/ListingsTable'
 import ListingsMap from './listings/ListingsMap'
 import ListingDetailDialog from './listings/ListingDetailDialog'
@@ -88,7 +87,6 @@ export default function ListingsPage() {
   const { profileId } = useParams<{ profileId: string }>()
   const { grouped, refetch } = useSearchResults()
   const { profile, refetch: refetchProfile } = useUserProfile()
-  const { setPendingMessage, openChat } = useFloatingChat()
 
   const [view, setView] = useState<View>('list')
   const [selectedListing, setSelectedListing] = useState<SearchResult | null>(null)
@@ -132,14 +130,6 @@ export default function ListingsPage() {
   function handleListingSelect(result: SearchResult) {
     setSelectedListing(result)
     setDialogOpen(true)
-    const l = result.listingData
-    const sqftPart = l.sqft ? `, ${l.sqft.toLocaleString()} sqft` : ''
-    setPendingMessage(
-      `I'm viewing this listing: ${l.address} — $${l.price.toLocaleString()}, ` +
-        `${l.bedrooms} bed / ${l.bathrooms} bath${sqftPart}. ` +
-        `How does it compare to my search criteria and is it a good fit for me?`,
-    )
-    openChat()
   }
 
   const criteriaPills: string[] = []

@@ -30,6 +30,17 @@ export default function ListingDetailDialog({ result, open, onClose }: ListingDe
     openChat()
   }
 
+  function handleAiAnalysis() {
+    onClose()
+    const sqftPart = l.sqft ? `, ${l.sqft.toLocaleString()} sqft` : ''
+    setPendingMessage(
+      `I'm viewing this listing: ${l.address} — $${l.price.toLocaleString()}, ` +
+        `${l.bedrooms} bed / ${l.bathrooms} bath${sqftPart}. ` +
+        `How does it compare to my search criteria and is it a good fit for me?`,
+    )
+    openChat()
+  }
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
@@ -125,6 +136,9 @@ export default function ListingDetailDialog({ result, open, onClose }: ListingDe
             View Listing
           </Button>
         )}
+        <Button variant="outlined" color="primary" size="small" onClick={handleAiAnalysis}>
+          AI Analysis
+        </Button>
         <Button variant="contained" color="primary" size="small" onClick={handleScheduleViewing}>
           Schedule Viewing
         </Button>
