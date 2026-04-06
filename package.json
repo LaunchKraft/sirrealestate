@@ -13,5 +13,10 @@
   },
   "devDependencies": {
     "typescript": "^5.7.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@smithy/types": "4.13.1"
+    }
   }
 }
