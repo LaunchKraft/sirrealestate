@@ -91,6 +91,7 @@ export default function FloatingChat() {
           type: 'AI',
           message: response.reply,
           animate: true,
+          listings: response.listings,
         },
       ])
     } catch {

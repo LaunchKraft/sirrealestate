@@ -59,7 +59,7 @@ import * as GenerateFlPurchaseAgreement from './tools/generate-fl-purchase-agree
 import * as GenerateFlAddendum from './tools/generate-fl-addendum'
 import * as GenerateMnPurchaseAgreement from './tools/generate-mn-purchase-agreement'
 import * as GenerateMnAddendum from './tools/generate-mn-addendum'
-import type { ConversationMessage } from './types'
+import type { ConversationMessage, SearchResult } from './types'
 
 export const SYSTEM_PROMPT =
   'You are SirRealtor, an expert AI real estate agent. You help users find properties by ' +
@@ -836,6 +836,7 @@ export async function handler(
   try {
     let reply = ''
     let hasToolUse = false
+    const collectedListings: SearchResult[] = []
     const MAX_TOOL_ROUNDS = 10
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
@@ -879,6 +880,10 @@ export async function handler(
           toolUseBlocks.map(async (block) => {
             const result = await executeTool(block.name, block.input, userId, userEmail)
               .catch((err: unknown) => ({ error: String(err) }))
+            if (block.name === 'get_search_results' && result && !('error' in (result as object))) {
+              const { results } = result as { results: SearchResult[] }
+              collectedListings.push(...results)
+            }
             return {
               type: 'tool_result' as const,
               tool_use_id: block.id,
@@ -903,6 +908,7 @@ export async function handler(
         sessionId: resolvedSessionId,
         messages: updatedMessages,
         hasToolUse,
+        ...(collectedListings.length > 0 && { listings: collectedListings }),
       }),
     }
   } catch (err) {

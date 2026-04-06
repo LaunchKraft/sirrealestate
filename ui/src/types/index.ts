@@ -23,6 +23,8 @@ export interface ConversationMessage {
   content: ContentBlock[]
 }
 
+import type { SearchResult } from '@/hooks/useSearchResults'
+
 export interface ChatRequest {
   messages: ConversationMessage[]
   sessionId?: string
@@ -35,4 +37,5 @@ export interface ChatResponse {
   hasToolUse: boolean
   clientAction?: string
   toolUseId?: string
+  listings?: SearchResult[]
 }

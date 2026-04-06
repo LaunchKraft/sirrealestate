@@ -146,6 +146,7 @@ export default function ChatPage() {
         type: 'AI',
         message: response.reply,
         animate: true,
+        listings: response.listings,
       },
     ])
   }, [invalidateProfile, invalidateSearchResults, invalidateDocuments, invalidateOffers, invalidateViewings])

@@ -6,6 +6,7 @@ import { Check, Copy, ThumbsDown, ThumbsUp } from 'lucide-react'
 import logo from '@/assets/logo.png'
 import { cn } from '@/lib/utils'
 import { chatFeedback } from '@/services/api'
+import ListingMatchCard from '@/components/sidebar/ListingMatchCard'
 
 type ChatMessageProps = {
   conversation: Conversation
@@ -70,6 +71,14 @@ export default function ChatMessage({
             >
               {conversation.message}
             </DsMarkdown>
+
+            {conversation.listings && conversation.listings.length > 0 && !isAnimating && (
+              <Box className="mt-3 flex flex-col gap-2">
+                {conversation.listings.map((result) => (
+                  <ListingMatchCard key={result.profileIdListingId} result={result} />
+                ))}
+              </Box>
+            )}
 
             {conversation.suggestedQuestions ? (
               <Box className="mt-3 flex flex-wrap gap-1.5">
