@@ -1,219 +1,345 @@
-<!DOCTYPE html>
+<!doctype html>
+<html lang="en" dir="ltr">
 
-<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sir Realtor — Coming Soon</title>
-  <meta name="description" content="Sir Realtor is coming soon. Your AI-powered real estate agent." />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="utf-8">
+    <title>Sir Realtor — AI-Powered Home Buying</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sir Realtor is an agentic AI real estate agent that guides you with ease through the entire homebuying process.">
+    <meta name="keywords" content="real estate, AI agent, home buying, Sir Realtor, agentic AI">
+    <meta name="author" content="Sir Realtor, Inc.">
 
-    body {
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #f8fafc;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: #1e293b;
-      padding: 2rem;
-    }
+    <!-- favicon -->
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-    .card {
-      text-align: center;
-      max-width: 480px;
-      width: 100%;
-    }
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" id="bootstrap-style" class="theme-opt" rel="stylesheet" type="text/css">
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet" type="text/css">
+    <link href="https://unicons.iconscout.com/release/v4.0.8/css/line.css" type="text/css" rel="stylesheet">
+    <!-- Theme Style -->
+    <link href="assets/css/style.min.css" id="color-opt" class="theme-opt" rel="stylesheet" type="text/css">
 
-    .logo {
-      width: 144px;
-      height: 144px;
-      border-radius: 50%;
-      object-fit: cover;
-      object-position: top;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
-    }
-
-    h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.75rem;
-      color: #0f172a;
-    }
-
-    .tagline {
-      font-size: 1.125rem;
-      color: #475569;
-      line-height: 1.6;
-      margin-bottom: 2.5rem;
-    }
-
-    .badge {
-      display: inline-block;
-      background: #00b4d8;
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 0.375rem 1rem;
-      border-radius: 999px;
-    }
-
-    footer {
-      margin-top: 3rem;
-      font-size: 0.8rem;
-      color: #94a3b8;
-    }
-
-    .waitlist-form {
-      margin-top: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-      width: 100%;
-      max-width: 360px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .waitlist-form p {
-      font-size: 0.9rem;
-      color: #475569;
-      margin-bottom: 0.25rem;
-    }
-
-    .waitlist-input-row {
-      display: flex;
-      width: 100%;
-      gap: 0.5rem;
-    }
-
-    .waitlist-input-row input {
-      flex: 1;
-      padding: 0.625rem 1rem;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      color: #1e293b;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    .waitlist-input-row input:focus {
-      border-color: #00b4d8;
-    }
-
-    .waitlist-input-row button {
-      padding: 0.625rem 1.25rem;
-      background: #00b4d8;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-
-    .waitlist-input-row button:hover {
-      background: #0077b6;
-    }
-
-    .waitlist-input-row button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .waitlist-message {
-      font-size: 0.875rem;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      width: 100%;
-      text-align: center;
-    }
-
-    .waitlist-message.success {
-      background: #ecfdf5;
-      color: #065f46;
-    }
-
-    .waitlist-message.error {
-      background: #fef2f2;
-      color: #991b1b;
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <img src="./logo.png" alt="Sir Realtor" class="logo" />
-    <h1>Sir Realtor</h1>
-    <p class="tagline">Your AI-powered real estate agent.<br>Something exciting is on the way.</p>
-    <span class="badge">Coming Soon</span>
-
-    <div class="waitlist-form">
-      <p>Get early access — join the waitlist.</p>
-      <div class="waitlist-input-row">
-        <input id="waitlist-email" type="email" placeholder="you@example.com" autocomplete="email" />
-        <button id="waitlist-btn" type="button">Join</button>
-      </div>
-      <div id="waitlist-message" class="waitlist-message" style="display:none"></div>
-    </div>
-  </div>
-  <footer>&copy; 2025 Sir Realtor. All rights reserved.</footer>
-
-  <script>
-    (function () {
-      var btn = document.getElementById('waitlist-btn')
-      var input = document.getElementById('waitlist-email')
-      var msg = document.getElementById('waitlist-message')
-
-      function showMessage(text, type) {
-        msg.textContent = text
-        msg.className = 'waitlist-message ' + type
-        msg.style.display = 'block'
-      }
-
-      btn.addEventListener('click', function () {
-        var email = input.value.trim()
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          showMessage('Please enter a valid email address.', 'error')
-          return
+    <style>
+        .logo-brand {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
         }
-        btn.disabled = true
-        btn.textContent = 'Joining…'
-        msg.style.display = 'none'
+        .logo-brand.logo-light-mode { color: #3c4858; }
+        .logo-brand.logo-dark-mode  { color: #fff; }
+        .logo img {
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: top;
+        }
+        .commission-hero {
+            background-color: #1a2332;
+        }
+        .commission-hero p {
+            color: rgba(255,255,255,0.65);
+        }
+        #signup-message {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .step-img {
+            mix-blend-mode: multiply;
+        }
+    </style>
+</head>
 
-        fetch('https://api.sirrealtor.com/waitlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email }),
-        })
-          .then(function (res) {
-            if (!res.ok) throw new Error('error')
-            showMessage("You're on the list! We'll be in touch.", 'success')
-            input.value = ''
-            btn.textContent = 'Done!'
-          })
-          .catch(function () {
-            showMessage('Something went wrong. Please try again.', 'error')
-            btn.disabled = false
-            btn.textContent = 'Join'
-          })
-      })
+<body>
 
-      input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') btn.click()
-      })
-    })()
-  </script>
+    <!-- Navbar Start -->
+    <header id="topnav" class="defaultscroll sticky">
+        <div class="container">
+            <!-- Logo -->
+            <a class="logo d-flex align-items-center gap-2" href="#home">
+                <img src="logo.png" height="36" alt="Sir Realtor">
+                <span class="logo-brand logo-light-mode">Sir Realtor</span>
+                <span class="logo-brand logo-dark-mode">Sir Realtor</span>
+            </a>
+
+            <div class="menu-extras">
+                <div class="menu-item">
+                    <a class="navbar-toggle" id="isToggle" onclick="toggleMenu()">
+                        <div class="lines">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div id="navigation">
+                <ul class="navigation-menu">
+                    <li><a href="#home" class="sub-menu-item">Home</a></li>
+                    <li><a href="#how-it-works" class="sub-menu-item">How Sir Realtor Works</a></li>
+                    <li><a href="#signup" class="sub-menu-item">Sign Up</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+    <!-- Navbar End -->
+
+    <!-- Hero Start -->
+    <section class="bg-half-170 d-table w-100" id="home">
+        <div class="container">
+            <div class="row mt-5 align-items-center">
+                <div class="col-lg-7 col-md-7">
+                    <div class="title-heading me-lg-4">
+                        <h1 class="heading mb-3">Homebuying so easy it's <span class="text-primary">Surreal</span></h1>
+                        <p class="para-desc text-muted">Sir Realtor is an agentic AI real estate agent that can guide you with ease, on your own time and on your own terms through the homebuying process. Sir Realtor can guide you through: finding, booking viewing appointments, making an offer and the full closing process.</p>
+                        <div class="mt-4">
+                            <a href="#signup" class="btn btn-primary mt-2"><i class="uil uil-user-plus me-1"></i> Sign Up</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 col-md-5 mt-4 pt-2 mt-sm-0 pt-sm-0">
+                    <img src="assets/images/Startup_SVG.svg" alt="Sir Realtor AI homebuying">
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Hero End -->
+
+    <!-- How Sir Realtor Works Start -->
+    <section class="section bg-light border-bottom" id="how-it-works">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 text-center">
+                    <div class="section-title mb-4 pb-2">
+                        <h2 class="title mb-4" style="font-size: 2.5rem !important;">How Sir Realtor Works</h2>
+                        <p class="text-muted para-desc mb-0 mx-auto">From your first search to keys in hand, <span class="text-primary fw-bold">Sir Realtor</span> handles every step of your homebuying journey with AI-powered intelligence and care.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 1: FIND — image left, text right -->
+            <div class="row align-items-center">
+                <div class="col-lg-5 col-md-6 mt-4 pt-2">
+                    <img src="sample_images/step1.png" class="img-fluid step-img" alt="Find your perfect home">
+                </div>
+
+                <div class="col-lg-7 col-md-6 mt-4 pt-2">
+                    <div class="section-title ms-lg-5">
+                        <h4 class="title mb-4">Find Your Perfect Home</h4>
+                        <p class="text-muted">Our AI never stops searching for you. Sir Realtor continuously scans listings and surfaces the best matches based on your criteria — going far beyond a simple keyword search.</p>
+                        <ul class="list-unstyled text-muted">
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>AI Powered searches</li>
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>Continual Agentic Searching</li>
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>AI Powered Insights into neighborhoods, school districts, and best value</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: VIEW — text left, image right -->
+        <div class="container mt-100 mt-60">
+            <div class="row align-items-center">
+                <div class="col-lg-7 col-md-6 order-2 order-md-1 mt-4 mt-sm-0 pt-2 pt-sm-0">
+                    <div class="section-title">
+                        <h4 class="title mb-4">Book Viewings Effortlessly</h4>
+                        <p class="text-muted">Tell us your availability and Sir Realtor handles the rest. We'll contact the listing agent and coordinate viewing appointments on your behalf — no back-and-forth required.</p>
+                        <ul class="list-unstyled text-muted">
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>Tell us your availability</li>
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>We'll contact the listing agent on your behalf</li>
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>Viewing appointments set up for you automatically</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 col-md-6 order-1 order-md-2 mt-4 pt-2">
+                    <img src="sample_images/step2.png" class="img-fluid step-img" alt="Book viewing appointments">
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: OFFER — image left, text right -->
+        <div class="container mt-100 mt-60">
+            <div class="row align-items-center">
+                <div class="col-lg-5 col-md-6 mt-4 pt-2">
+                    <img src="sample_images/step3.png" class="img-fluid step-img" alt="Make an offer">
+                </div>
+
+                <div class="col-lg-7 col-md-6 mt-4 pt-2">
+                    <div class="section-title ms-lg-5">
+                        <h4 class="title mb-4">Make a Confident Offer</h4>
+                        <p class="text-muted">When you're ready, Sir Realtor generates your offer via DropBox Sign and sends it to you and the seller(s)/seller's agent. Sir Realtor knows the right forms to use in all 50 states — you're in good hands.</p>
+                        <ul class="list-unstyled text-muted">
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>Offer generated via DropBox Sign</li>
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>Correct forms for all 50 states</li>
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>We monitor offer status and keep you posted every step of the way</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: CLOSE — text left, image right -->
+        <div class="container mt-100 mt-60">
+            <div class="row align-items-center">
+                <div class="col-lg-7 col-md-6 order-2 order-md-1 mt-4 mt-sm-0 pt-2 pt-sm-0">
+                    <div class="section-title">
+                        <h4 class="title mb-4">Close with Confidence</h4>
+                        <p class="text-muted">Sir Realtor walks you through every step of the closing process. For appointment-based steps, our AI uses calendar technology to schedule based on your availability. Each state has different forms and requirements — our AI continuously stays on top of them and tailors your experience accordingly.</p>
+                        <ul class="list-unstyled text-muted">
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>AI calendar technology schedules closing appointments for you</li>
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>State-specific forms and processes handled automatically</li>
+                            <li class="mb-1"><span class="text-primary h5 me-2"><i class="uil uil-check-circle align-middle"></i></span>Continuously updated for each state's regulations</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 col-md-6 order-1 order-md-2 mt-4 pt-2">
+                    <img src="sample_images/step4.png" class="img-fluid step-img" alt="Close your home purchase">
+                </div>
+            </div>
+        </div>
+
+    </section>
+    <!-- How Sir Realtor Works End -->
+
+    <!-- Commission Hero Start -->
+    <section class="section commission-hero text-white text-center">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10">
+                    <h3 class="fw-bold mb-4 lh-base">Sir Realtor will split the 3% commission with you, meaning you'll get 1.5% of your purchase back, just for using Sir Realtor.</h3>
+                    <p class="fs-5">For example on an $800,000 purchase, you would get $12,000 back.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Commission Hero End -->
+
+    <!-- Sign Up Start -->
+    <section class="section" id="signup" style="padding-bottom: 120px;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-6 col-md-8 text-center">
+                    <div class="section-title mb-4 pb-2">
+                        <h4 class="title mb-3">We're in Beta Right Now</h4>
+                        <p class="text-muted para-desc mx-auto mb-0">Sign up to join the waitlist.</p>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                            <input id="signup-email" type="email" class="form-control" style="max-width: 300px;" placeholder="you@example.com" autocomplete="email">
+                            <button id="signup-btn" type="button" class="btn btn-primary">
+                                <i class="uil uil-envelope me-1"></i> Sign Up
+                            </button>
+                        </div>
+                        <div id="signup-message" class="alert mt-3" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Sign Up End -->
+
+    <!-- Footer Wave -->
+    <div class="position-relative" style="margin-top: 60px;">
+        <div class="shape overflow-hidden text-footer">
+            <svg viewBox="0 0 2880 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M720 125L2160 0H2880V250H0V125H720Z" fill="currentColor"></path>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Footer Start -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="footer-py-60">
+                        <div class="row justify-content-center text-center">
+                            <div class="col-lg-5 col-12">
+                                <a href="#home" class="logo-footer d-inline-flex align-items-center gap-2 mb-3">
+                                    <img src="logo.png" height="40" alt="Sir Realtor" style="border-radius: 50%; object-fit: cover; object-position: top;">
+                                    <span class="fw-bold fs-5 text-white">Sir Realtor</span>
+                                </a>
+                                <p class="mt-3">Your AI-powered real estate agent. From finding to closing, Sir Realtor guides you every step of the way.</p>
+                                <ul class="list-unstyled social-icon foot-social-icon mb-0 mt-4 d-flex justify-content-center gap-1">
+                                    <li class="list-inline-item mb-0"><a href="#" class="rounded"><i class="uil uil-facebook-f align-middle" title="Facebook"></i></a></li>
+                                    <li class="list-inline-item mb-0"><a href="#" class="rounded"><i class="uil uil-instagram align-middle" title="Instagram"></i></a></li>
+                                    <li class="list-inline-item mb-0"><a href="#" class="rounded"><i class="uil uil-twitter align-middle" title="Twitter"></i></a></li>
+                                    <li class="list-inline-item mb-0"><a href="mailto:hello@sirrealtor.com" class="rounded"><i class="uil uil-envelope align-middle" title="Email"></i></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-py-30 footer-bar">
+            <div class="container text-center">
+                <p class="mb-0">&copy; Sir Realtor, Inc.</p>
+            </div>
+        </div>
+    </footer>
+    <!-- Footer End -->
+
+    <!-- Back to top -->
+    <a href="#" onclick="topFunction()" id="back-to-top" class="back-to-top fs-5"><i data-feather="arrow-up" class="fea icon-sm icons align-middle"></i></a>
+
+    <!-- Javascript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="assets/js/plugins.init.js"></script>
+    <script src="assets/js/app.js"></script>
+
+    <!-- Waitlist form -->
+    <script>
+        (function () {
+            var btn   = document.getElementById('signup-btn');
+            var input = document.getElementById('signup-email');
+            var msg   = document.getElementById('signup-message');
+
+            function showMessage(text, type) {
+                msg.textContent = text;
+                msg.className   = 'alert mt-3 ' + (type === 'success' ? 'alert-success' : 'alert-danger');
+                msg.style.display = 'block';
+            }
+
+            btn.addEventListener('click', function () {
+                var email = input.value.trim();
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showMessage('Please enter a valid email address.', 'error');
+                    return;
+                }
+                btn.disabled = true;
+                btn.innerHTML = '<i class="uil uil-spinner me-1"></i> Joining…';
+                msg.style.display = 'none';
+
+                fetch('https://api.sirrealtor.com/waitlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email }),
+                })
+                    .then(function (res) {
+                        if (!res.ok) throw new Error('error');
+                        showMessage("You’re on the list! We’ll be in touch.", 'success');
+                        input.value = '';
+                        btn.innerHTML = '<i class="uil uil-check me-1"></i> Done!';
+                    })
+                    .catch(function () {
+                        showMessage('Something went wrong. Please try again.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="uil uil-envelope me-1"></i> Sign Up';
+                    });
+            });
+
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') btn.click();
+            });
+        })();
+    </script>
+
 </body>
 </html>
