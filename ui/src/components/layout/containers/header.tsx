@@ -96,7 +96,7 @@ export default function Header() {
         <Box className="flex flex-1 items-center">
           <Link to="/chat" className="flex items-center gap-2 no-underline">
             <img src={logo} alt="Sir Realtor" className="h-14 w-auto" />
-            <Typography variant="h6" className="font-heading font-bold tracking-tight" sx={{ fontWeight: 700, fontSize: '1.9rem' }}>
+            <Typography variant="h6" className="font-heading font-bold tracking-tight" sx={{ fontWeight: 700, fontSize: '1.9rem', fontFamily: "'Nunito', sans-serif" }}>
               Sir <Box component="span" sx={{ color: 'primary.main' }}>Realtor</Box>
             </Typography>
           </Link>

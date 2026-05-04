@@ -66,7 +66,7 @@ export default function LoginPage() {
           <Box className="flex flex-col gap-10 px-8 sm:px-14">
             <Box className="flex flex-col items-center gap-2">
               <img src={logo} alt="Sir Realtor" className="w-48 h-auto" />
-              <Typography variant="h5" className="font-heading font-bold tracking-tight" sx={{ fontWeight: 700, fontSize: '1.9rem' }}>
+              <Typography variant="h5" className="font-heading font-bold tracking-tight" sx={{ fontWeight: 700, fontSize: '1.9rem', fontFamily: "'Nunito', sans-serif" }}>
                 Sir <Box component="span" sx={{ color: 'primary.main' }}>Realtor</Box>
               </Typography>
             </Box>

@@ -201,6 +201,9 @@ importers:
       '@fontsource/mulish':
         specifier: 5.2.6
         version: 5.2.6
+      '@fontsource/nunito':
+        specifier: ^5.2.7
+        version: 5.2.7
       '@fontsource/urbanist':
         specifier: 5.2.6
         version: 5.2.6
@@ -1255,6 +1258,9 @@ packages:
 
   '@fontsource/mulish@5.2.6':
     resolution: {integrity: sha512-5fGU/WT3vvpdYEqmAf0ufmoacpFTkXmvaIQ/rKvXTW9p39+Y5HlZAcHQOm/mVVb+xUUV+d9Djzlhr+pJtSDJhg==}
+
+  '@fontsource/nunito@5.2.7':
+    resolution: {integrity: sha512-pmtBq0H9ex9nk+RtJYEJOD9pag393iHETnl/PVKleF4i06cd0ttngK5ZCTgYb5eOqR3Xdlrjtev8m7bmgYprew==}
 
   '@fontsource/urbanist@5.2.6':
     resolution: {integrity: sha512-snp1FO9o+ZvK46Kd6YbxOSDnjIKm6I7rtAbiul39swXTQkG7tC+jHqLBFKXk1w0opxNwqNqZQsBfyUltAeJc3A==}
@@ -6360,6 +6366,8 @@ snapshots:
     optional: true
 
   '@fontsource/mulish@5.2.6': {}
+
+  '@fontsource/nunito@5.2.7': {}
 
   '@fontsource/urbanist@5.2.6': {}
 
