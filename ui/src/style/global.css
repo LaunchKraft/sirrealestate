@@ -117,6 +117,10 @@
   @apply z-100;
 }
 
+.nav-logo {
+  max-height: 2.5rem;
+}
+
 @theme {
   --shadow-line-left: var(--shadow-line-left);
   --shadow-line-right: var(--shadow-line-right);

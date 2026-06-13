@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Avatar, Box, Button, Chip, Divider, Popover, Typography } from '@mui/material'
 import { useLayoutContext } from '@/components/layout/layout-context'
 import { useSidebarRefresh } from '@/components/layout/sidebar-refresh-context'
-import logo from '@/assets/logo.png'
+import logo from '@/assets/SR_logo.png'
 import { Menu as MenuIcon, Bell } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserProfile } from '@/hooks/useUserProfile'
@@ -95,10 +95,7 @@ export default function Header() {
         {/* Logo */}
         <Box className="flex flex-1 items-center">
           <Link to="/chat" className="flex items-center gap-2 no-underline">
-            <img src={logo} alt="Sir Realtor" className="h-14 w-auto" />
-            <Typography variant="h6" className="font-heading font-bold tracking-tight" sx={{ fontWeight: 700, fontSize: { xs: '1.6rem', sm: '1.9rem' }, fontFamily: "'Nunito', sans-serif", whiteSpace: 'nowrap' }}>
-              Sir <Box component="span" sx={{ color: 'primary.main' }}>Realtor</Box>
-            </Typography>
+            <img src={logo} alt="Sir Realtor" className="nav-logo h-14 w-auto" />
           </Link>
         </Box>
 
