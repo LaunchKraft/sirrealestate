@@ -93,9 +93,9 @@ export default function Header() {
         />
 
         {/* Logo */}
-        <Box className="flex flex-1 items-center">
-          <Link to="/chat" className="flex items-center gap-2 no-underline">
-            <img src={logo} alt="Sir Realtor" className="nav-logo h-14 w-auto" />
+        <Box className="flex min-w-0 flex-1 items-center">
+          <Link to="/chat" className="flex min-w-0 items-center no-underline">
+            <img src={logo} alt="Sir Realtor" className="nav-logo h-8 w-auto max-w-full shrink object-contain object-left sm:h-14" />
           </Link>
         </Box>
 
