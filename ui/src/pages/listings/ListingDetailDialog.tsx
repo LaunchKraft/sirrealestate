@@ -53,22 +53,33 @@ export default function ListingDetailDialog({ result, open, onClose }: ListingDe
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <IconButton
-        aria-label="Close"
-        onClick={onClose}
-        size="small"
-        sx={{ position: 'absolute', top: 6, right: 6, color: 'grey.400', '&:hover': { color: 'grey.600' } }}
-      >
-        <X size={18} />
-      </IconButton>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1, pt: 4.5 }}>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1, pt: 6 }}>
         {l.address}
-        <FavoriteButton
-          listingId={result.listingId}
-          listingData={result.listingData}
-          profileId={result.profileId}
-          size="medium"
-        />
+        <Box sx={{ position: 'relative', flexShrink: 0 }}>
+          {/* Close sits centered above the heart; -6px margin leaves a ~5px gap between the glyphs */}
+          <IconButton
+            aria-label="Close"
+            onClick={onClose}
+            sx={{
+              position: 'absolute',
+              bottom: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              mb: '-6px',
+              p: 0.5,
+              color: 'grey.400',
+              '&:hover': { color: 'grey.600' },
+            }}
+          >
+            <X size={18} />
+          </IconButton>
+          <FavoriteButton
+            listingId={result.listingId}
+            listingData={result.listingData}
+            profileId={result.profileId}
+            size="medium"
+          />
+        </Box>
       </DialogTitle>
       <DialogContent dividers sx={{ padding: 0 }}>
         {imgUrl && (
