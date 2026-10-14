@@ -1,5 +1,8 @@
 import { Stack, RemovalPolicy, CfnOutput, SecretValue, type StackProps } from 'aws-cdk-lib'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
+import * as iam from 'aws-cdk-lib/aws-iam'
+import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as ssm from 'aws-cdk-lib/aws-ssm'
 import type { Construct } from 'constructs'
 
@@ -82,6 +85,15 @@ function invitationEmailBody(appDomain: string): string {
   )
 }
 
+// launchr (LaunchKraft's internal launch tool, AWS account 521554525147) runs the
+// Sir Realtor beta: waitlist, invites, and the /beta-signup flow. Its public handler
+// assumes this fixed-name role to create invited users with AdminCreateUser.
+const LAUNCHR_ACCOUNT_ID = '521554525147'
+
+// Owned by SirRealtor-Data. Referenced by name rather than a cross-stack export so
+// this stack doesn't take a deploy-order dependency on the data stack.
+const WAITLIST_TABLE_NAME = 'SirRealtor-Waitlist'
+
 export class AuthStack extends Stack {
   readonly userPool: cognito.UserPool
   readonly userPoolClient: cognito.UserPoolClient
@@ -91,8 +103,51 @@ export class AuthStack extends Stack {
 
     const googleClientId = ssm.StringParameter.valueForStringParameter(this, '/sirrealtor/google-client-id')
 
+    const waitlistTable = dynamodb.Table.fromTableName(this, 'WaitlistTable', WAITLIST_TABLE_NAME)
+
+    // Users created via AdminCreateUser are launchr beta signups (or accounts made from
+    // the admin app) — flag them as beta in the waitlist table, which chat-service reads
+    // to enable the beta prompt, save_beta_feedback, and test pre-approval letters.
+    // Never blocks the signup: a failed write is logged and the user is still created.
+    const preSignUpLambda = new lambda.Function(this, 'PreSignUpLambda', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'index.handler',
+      environment: { WAITLIST_TABLE: waitlistTable.tableName },
+      code: lambda.Code.fromInline(`
+        const { DynamoDBClient, UpdateItemCommand } = require('@aws-sdk/client-dynamodb');
+        const dynamo = new DynamoDBClient({});
+        exports.handler = async (event) => {
+          if (event.triggerSource !== 'PreSignUp_AdminCreateUser') return event;
+          const email = (event.request.userAttributes.email || '').toLowerCase();
+          if (!email) return event;
+          try {
+            await dynamo.send(new UpdateItemCommand({
+              TableName: process.env.WAITLIST_TABLE,
+              Key: { email: { S: email } },
+              UpdateExpression: 'SET #s = :s, createdAt = if_not_exists(createdAt, :now), #src = if_not_exists(#src, :src)',
+              ExpressionAttributeNames: { '#s': 'status', '#src': 'source' },
+              ExpressionAttributeValues: {
+                ':s': { S: 'accepted_beta' },
+                ':now': { S: new Date().toISOString() },
+                ':src': { S: 'launchr' },
+              },
+            }));
+          } catch (err) {
+            console.error('Failed to flag beta user', email, err);
+          }
+          return event;
+        };
+      `),
+    })
+    waitlistTable.grantWriteData(preSignUpLambda)
+
     this.userPool = new cognito.UserPool(this, 'UserPool', {
-      selfSignUpEnabled: true,
+      // Closed beta: accounts are only created server-side — by launchr for invited
+      // beta users (see LaunchrBetaSignupRole below) or from the admin app.
+      selfSignUpEnabled: false,
+      lambdaTriggers: {
+        preSignUp: preSignUpLambda,
+      },
       // Email is the only identifier — no separate username field exposed to users.
       signInAliases: { email: true },
       autoVerify: { email: true },
@@ -171,6 +226,19 @@ export class AuthStack extends Stack {
       },
     })
     this.userPoolClient.node.addDependency(googleProvider)
+
+    // Assumed by launchr's public handler when an invited beta user completes
+    // app.sirrealtor.com/beta-signup. Fixed role name — launchr builds the ARN from
+    // the account id alone.
+    const launchrBetaSignupRole = new iam.Role(this, 'LaunchrBetaSignupRole', {
+      roleName: 'launchr-beta-signup',
+      assumedBy: new iam.AccountPrincipal(LAUNCHR_ACCOUNT_ID),
+      description: 'Assumed by launchr to create Cognito users for accepted beta signups',
+    })
+    launchrBetaSignupRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['cognito-idp:AdminCreateUser', 'cognito-idp:AdminSetUserPassword', 'cognito-idp:AdminGetUser'],
+      resources: [this.userPool.userPoolArn],
+    }))
 
     new CfnOutput(this, 'UserPoolId', {
       value: this.userPool.userPoolId,
