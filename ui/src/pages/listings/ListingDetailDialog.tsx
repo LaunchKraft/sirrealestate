@@ -1,4 +1,4 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Typography } from '@mui/material'
 import { useFloatingChat } from '@/components/chat/floating-chat-context'
 import type { SearchResult } from '@/hooks/useSearchResults'
 import { streetViewUrl } from '@/lib/streetview'
@@ -53,7 +53,15 @@ export default function ListingDetailDialog({ result, open, onClose }: ListingDe
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
+      <IconButton
+        aria-label="Close"
+        onClick={onClose}
+        size="small"
+        sx={{ position: 'absolute', top: 6, right: 6, color: 'grey.400', '&:hover': { color: 'grey.600' } }}
+      >
+        <X size={18} />
+      </IconButton>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1, pt: 4.5 }}>
         {l.address}
         <FavoriteButton
           listingId={result.listingId}
@@ -167,16 +175,6 @@ export default function ListingDetailDialog({ result, open, onClose }: ListingDe
           onClick={handleScheduleViewing}
         >
           Schedule Viewing
-        </Button>
-        <Button
-          variant="text"
-          color="primary"
-          size="small"
-          sx={linkSx}
-          startIcon={<X size={16} />}
-          onClick={onClose}
-        >
-          Close
         </Button>
       </DialogActions>
     </Dialog>
