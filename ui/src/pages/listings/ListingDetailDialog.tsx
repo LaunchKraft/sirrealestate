@@ -5,6 +5,16 @@ import { streetViewUrl } from '@/lib/streetview'
 import FavoriteButton from '@/components/favorites/FavoriteButton'
 import { stats } from '@/services/api'
 import { trackEvent } from '@/lib/analytics'
+import { CalendarPlus, ExternalLink, Sparkles, X } from 'lucide-react'
+
+const linkSx = {
+  minWidth: 0,
+  px: 0.5,
+  whiteSpace: 'nowrap',
+  bgcolor: 'transparent',
+  '& .MuiButton-startIcon': { mr: 0.5, ml: 0 },
+  '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+} as const
 
 interface ListingDetailDialogProps {
   result: SearchResult | null
@@ -115,12 +125,14 @@ export default function ListingDetailDialog({ result, open, onClose }: ListingDe
           )}
         </Box>
       </DialogContent>
-      <DialogActions className="gap-2 p-3">
+      <DialogActions className="flex-wrap justify-end gap-x-4 gap-y-1 px-4 py-3" disableSpacing>
         {l.listingUrl && (
           <Button
-            variant="outlined"
-            color="grey"
+            variant="text"
+            color="primary"
             size="small"
+            sx={linkSx}
+            startIcon={<ExternalLink size={16} />}
             href={l.listingUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -136,13 +148,34 @@ export default function ListingDetailDialog({ result, open, onClose }: ListingDe
             View Listing
           </Button>
         )}
-        <Button variant="outlined" color="primary" size="small" onClick={handleAiAnalysis}>
+        <Button
+          variant="text"
+          color="primary"
+          size="small"
+          sx={linkSx}
+          startIcon={<Sparkles size={16} />}
+          onClick={handleAiAnalysis}
+        >
           AI Analysis
         </Button>
-        <Button variant="contained" color="primary" size="small" onClick={handleScheduleViewing}>
+        <Button
+          variant="text"
+          color="primary"
+          size="small"
+          sx={linkSx}
+          startIcon={<CalendarPlus size={16} />}
+          onClick={handleScheduleViewing}
+        >
           Schedule Viewing
         </Button>
-        <Button variant="text" color="grey" size="small" onClick={onClose}>
+        <Button
+          variant="text"
+          color="primary"
+          size="small"
+          sx={linkSx}
+          startIcon={<X size={16} />}
+          onClick={onClose}
+        >
           Close
         </Button>
       </DialogActions>
