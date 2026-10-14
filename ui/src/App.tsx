@@ -14,7 +14,6 @@ import ListingsPage from '@/pages/ListingsPage'
 import ViewingsPage from '@/pages/ViewingsPage'
 import LoginPage from '@/pages/LoginPage'
 import SignUpPage from '@/pages/SignUpPage'
-import BetaWaitlistPage from '@/pages/BetaWaitlistPage'
 import BetaSignUpPage from '@/pages/BetaSignUpPage'
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
 import ViewingResponsePage from '@/pages/ViewingResponsePage'
@@ -27,13 +26,19 @@ import IconGalleryPage from '@/pages/IconGalleryPage'
 import OfferDetailPage from '@/pages/offers/OfferDetailPage'
 import ClosingDetailPage from '@/pages/closings/ClosingDetailPage'
 
+// The beta waitlist signup lives on the marketing site.
+function ExternalRedirect({ to }: { to: string }) {
+  useEffect(() => { window.location.replace(to) }, [to])
+  return null
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <RouteTracker />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/sign-up" element={<BetaWaitlistPage />} />
+        <Route path="/sign-up" element={<ExternalRedirect to="https://sirrealtor.com/#signup" />} />
         <Route path="/sign-up-internal" element={<SignUpPage />} />
         <Route path="/beta-signup" element={<BetaSignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

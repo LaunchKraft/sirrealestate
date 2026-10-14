@@ -321,6 +321,8 @@
     <!-- Waitlist form -->
     <script>
         (function () {
+            var LAUNCHR_PUBLIC_URL = 'https://f3xcm4xr4b5sryk74xi7kvh3x40aotxe.lambda-url.us-east-1.on.aws/';
+            var LAUNCHR_PRODUCT_ID = '6b1cdb8a-33b8-4115-b42e-8abd2bb5214f';
             var btn   = document.getElementById('signup-btn');
             var input = document.getElementById('signup-email');
             var msg   = document.getElementById('signup-message');
@@ -341,10 +343,17 @@
                 btn.innerHTML = '<i class="uil uil-spinner me-1"></i> Joining…';
                 msg.style.display = 'none';
 
-                fetch('https://api.sirrealtor.com/waitlist', {
+                // Beta waitlist is managed in launchr (LaunchKraft's launch tool).
+                fetch(LAUNCHR_PUBLIC_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email }),
+                    body: JSON.stringify({
+                        action: 'join-waitlist',
+                        productId: LAUNCHR_PRODUCT_ID,
+                        email: email,
+                        firstName: '',
+                        lastName: '',
+                    }),
                 })
                     .then(function (res) {
                         if (!res.ok) throw new Error('error');

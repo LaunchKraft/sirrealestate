@@ -2,7 +2,7 @@ import '@/style/global.css'
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { signUp, confirmSignUp, signIn } from 'aws-amplify/auth'
+import { signIn } from 'aws-amplify/auth'
 import {
   Alert,
   AlertTitle,
@@ -21,9 +21,27 @@ import MuiLayerOverride from '@/theme/mui-layer-override'
 import logo from '@/assets/logo.png'
 import { EyeOff, Eye } from 'lucide-react'
 
-const API_URL = import.meta.env.VITE_API_URL as string
+// The Sir Realtor beta (waitlist, invites, account creation) is managed in launchr,
+// LaunchKraft's launch tool. Its public handler checks the invite and creates the
+// Cognito user server-side — self-signup is disabled on the user pool.
+const LAUNCHR_PUBLIC_URL = 'https://f3xcm4xr4b5sryk74xi7kvh3x40aotxe.lambda-url.us-east-1.on.aws/'
+const LAUNCHR_PRODUCT_ID = '6b1cdb8a-33b8-4115-b42e-8abd2bb5214f'
 
-type Step = 'checking' | 'invalid' | 'form' | 'confirm'
+// Mirrors the user pool's password policy so we can fail fast with a clear message.
+const PASSWORD_RULES = 'At least 8 characters, with an uppercase letter, a lowercase letter, a number, and a symbol.'
+function meetsPasswordPolicy(pw: string): boolean {
+  return pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /[0-9]/.test(pw) && /[^A-Za-z0-9]/.test(pw)
+}
+
+function launchr(body: Record<string, unknown>): Promise<Response> {
+  return fetch(LAUNCHR_PUBLIC_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productId: LAUNCHR_PRODUCT_ID, ...body }),
+  })
+}
+
+type Step = 'checking' | 'invalid' | 'error' | 'form'
 
 export default function BetaSignUpPage() {
   const navigate = useNavigate()
@@ -35,53 +53,44 @@ export default function BetaSignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!email) { setStep('invalid'); return }
-    fetch(`${API_URL}/waitlist/check?email=${encodeURIComponent(email)}`)
+    let cancelled = false
+    launchr({ action: 'check-invited', email })
       .then((r) => r.json())
-      .then((data) => {
-        if (data.status === 'invited_beta') setStep('form')
-        else setStep('invalid')
+      .then((data) => { if (!cancelled) setStep(data.invited ? 'form' : 'invalid') })
+      .catch(() => {
+        if (!cancelled) {
+          setError('We could not verify your invitation just now. Please try again in a moment.')
+          setStep('error')
+        }
       })
-      .catch(() => setStep('invalid'))
+    return () => { cancelled = true }
   }, [email])
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!password || !confirmPassword) { setError('All fields are required.'); return }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return }
+    if (!meetsPasswordPolicy(password)) { setError(`Password requirements: ${PASSWORD_RULES}`); return }
     setError(null)
     setLoading(true)
     try {
-      await signUp({ username: email, password, options: { userAttributes: { email } } })
-      setStep('confirm')
+      const res = await launchr({ action: 'signup', email, password })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || 'Sign-up failed. Please try again.')
+      try {
+        await signIn({ username: email, password })
+        navigate('/chat', { replace: true })
+      } catch {
+        // Already registered (e.g. a second visit to the invite link) — send them to sign in.
+        navigate('/login', { replace: true })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign-up failed. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleConfirm = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!code) { setError('Verification code is required.'); return }
-    setError(null)
-    setLoading(true)
-    try {
-      await confirmSignUp({ username: email, confirmationCode: code })
-      await signIn({ username: email, password })
-      await fetch(`${API_URL}/waitlist/accept`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      }).catch(() => {}) // non-critical
-      navigate('/chat', { replace: true })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Verification failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -115,6 +124,13 @@ export default function BetaSignUpPage() {
               </Box>
             )}
 
+            {step === 'error' && (
+              <Box className="flex flex-col gap-3 text-center">
+                <Typography variant="h6" className="font-semibold">Something went wrong</Typography>
+                <Typography variant="body1" className="text-text-secondary">{error}</Typography>
+              </Box>
+            )}
+
             {step === 'form' && (
               <Box component="form" onSubmit={handleSignUp} className="flex flex-col gap-5">
                 <Box className="flex flex-col gap-1">
@@ -143,6 +159,8 @@ export default function BetaSignUpPage() {
                     }
                   />
                 </FormControl>
+
+                <Typography variant="caption" className="text-text-secondary -mt-3">{PASSWORD_RULES}</Typography>
 
                 <FormControl className="outlined" variant="standard" size="small">
                   <FormLabel component="label" className="mb-0.5!">Confirm password</FormLabel>
@@ -174,34 +192,6 @@ export default function BetaSignUpPage() {
               </Box>
             )}
 
-            {step === 'confirm' && (
-              <Box component="form" onSubmit={handleConfirm} className="flex flex-col gap-5">
-                <Typography variant="body1" className="text-text-secondary">
-                  We sent a verification code to <strong>{email}</strong>. Enter it below to finish signing in.
-                </Typography>
-
-                <FormControl className="outlined" variant="standard" size="small">
-                  <FormLabel component="label" className="mb-0.5!">Verification code</FormLabel>
-                  <Input
-                    type="text"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    disabled={loading}
-                  />
-                </FormControl>
-
-                {error && (
-                  <Alert severity="error" className="neutral bg-background-paper/60!">
-                    <AlertTitle variant="subtitle2">Verification error</AlertTitle>
-                    <Typography variant="body2">{error}</Typography>
-                  </Alert>
-                )}
-
-                <Button type="submit" variant="contained" disabled={loading} className="mt-2">
-                  {loading ? 'Verifying…' : 'Verify & Sign In'}
-                </Button>
-              </Box>
-            )}
           </Box>
         </Paper>
       </Box>
