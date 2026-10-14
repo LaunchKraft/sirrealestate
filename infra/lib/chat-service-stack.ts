@@ -416,19 +416,6 @@ export class ChatServiceStack extends Stack {
       authorizer: cognitoAuthorizer,
     })
 
-    // Unauthenticated — waitlist routes
-    new apigwv2.HttpRoute(this, 'WaitlistPostRoute', {
-      httpApi: props.httpApi,
-      routeKey: apigwv2.HttpRouteKey.with('/waitlist', apigwv2.HttpMethod.POST),
-      integration: dataIntegration,
-    })
-
-    new apigwv2.HttpRoute(this, 'WaitlistCheckRoute', {
-      httpApi: props.httpApi,
-      routeKey: apigwv2.HttpRouteKey.with('/waitlist/check', apigwv2.HttpMethod.GET),
-      integration: dataIntegration,
-    })
-
     new apigwv2.HttpRoute(this, 'StatsRoute', {
       httpApi: props.httpApi,
       routeKey: apigwv2.HttpRouteKey.with('/stats', apigwv2.HttpMethod.GET),
@@ -448,12 +435,6 @@ export class ChatServiceStack extends Stack {
       routeKey: apigwv2.HttpRouteKey.with('/stats/listing-click', apigwv2.HttpMethod.POST),
       integration: dataIntegration,
       authorizer: cognitoAuthorizer,
-    })
-
-    new apigwv2.HttpRoute(this, 'WaitlistAcceptRoute', {
-      httpApi: props.httpApi,
-      routeKey: apigwv2.HttpRouteKey.with('/waitlist/accept', apigwv2.HttpMethod.POST),
-      integration: dataIntegration,
     })
 
     // -------------------------------------------------------------------------
